@@ -378,6 +378,7 @@ input[type=checkbox]{width:17px;height:17px;accent-color:var(--blue);cursor:poin
   <div class="card">
     <div class="ptitle">Ricerca Professionista</div>
     <div class="psub">Digita oppure scegli dal menù a tendina — uno o più campi</div>
+    <div id="reload-bar" style="margin-bottom:12px;display:flex;align-items:center;gap:10px"><span id="reload-status" style="font-size:12px;color:var(--muted);flex:1"></span><button onclick="forceReload()" style="font-size:12px;padding:4px 10px;border:1px solid var(--border);border-radius:6px;background:transparent;color:var(--muted);cursor:pointer">u21ba Ricarica dati</button></div>
 
     <div class="fg">
       <label>Specializzazione Principale <span style="color:var(--ac)">[SPEC1]</span></label>
@@ -763,15 +764,22 @@ async function doLogin(){
 
 // ── SHEET DATA ─────────────────────────────────────────────────
 async function loadSheet(){
-  // gvizUrl() usa esclusivamente l'URL del foglio salvato in localStorage dall'admin
-  // L'endpoint gviz/tq di Google Sheets non ha problemi CORS — funziona direttamente dal browser
   const u = gvizUrl();
-  if(!u) return;
+  if(!u){ showDbg('❌ URL foglio non configurato. Vai al pannello Admin e inserisci il link del foglio.'); return; }
+  showDbg('⏳ Caricamento foglio in corso…');
   try{
     const resp = await fetch(u);
-    if(!resp.ok) throw new Error('HTTP ' + resp.status);
+    if(!resp.ok) throw new Error('HTTP ' + resp.status + ' — il foglio potrebbe non essere pubblico');
     const text = await resp.text();
-    const json = JSON.parse(text.substring(text.indexOf('(') + 1, text.lastIndexOf(')')));
+    // Il formato gviz restituisce: /*O_o*/\ngoogle.visualization.Query.setResponse({...})
+    const start = text.indexOf('(');
+    const end   = text.lastIndexOf(')');
+    if(start < 0 || end < 0) throw new Error('Risposta Google non riconosciuta. Formato inatteso:\n' + text.substring(0,200));
+    let json;
+    try{ json = JSON.parse(text.substring(start+1, end)); }
+    catch(pe){ throw new Error('Errore parsing JSON: ' + pe.message + '\nTesto: ' + text.substring(start+1, start+200)); }
+    if(!json.table) throw new Error('Struttura dati mancante (json.table assente)');
+    if(!json.table.rows || !json.table.rows.length) throw new Error('Il foglio è vuoto o non ha righe dati');
     sheetData = json.table.rows.map(row => {
       const o = {};
       'ABCDEFGHIJKLMNO'.split('').forEach((l, i) => {
@@ -779,9 +787,31 @@ async function loadSheet(){
       });
       return o;
     }).filter(r => r.A || r.B || r.C || r.D);
+    if(!sheetData.length) throw new Error('Nessuna riga valida trovata (le colonne A-D sono tutte vuote?)');
+    showDbg('✅ Foglio caricato: ' + sheetData.length + ' righe');
   } catch(e){
-    alert('Impossibile caricare i dati.\n\nErrore: ' + e.message + '\n\nVerificare che il foglio Google Sheets sia condiviso pubblicamente\n(Condividi → Chiunque con il link → Visualizzatore).');
+    sheetData = [];
+    showDbg('❌ ERRORE: ' + e.message);
+    console.error('loadSheet error:', e);
   }
+}
+function showDbg(msg){
+  let d = el('dbg-bar');
+  if(!d){
+    d = document.createElement('div');
+    d.id = 'dbg-bar';
+    d.style.cssText = 'position:fixed;bottom:0;left:0;right:0;background:#1e293b;color:#94a3b8;font:12px monospace;padding:6px 12px;z-index:9999;white-space:pre-wrap;word-break:break-all;max-height:80px;overflow:auto';
+    document.body.appendChild(d);
+  }
+  d.textContent = msg;
+  const rs = el('reload-status');
+  if(rs) rs.textContent = msg;
+}
+async function forceReload(){
+  sheetData = [];
+  setLoad(true);
+  await loadSheet();
+  setLoad(false);
 }
 
 // ── DROPDOWN ENGINE ────────────────────────────────────────────
