@@ -542,6 +542,7 @@ const pubP  = () => sg(K.P) || DP;
 const shtU  = () => sg(K.S) || '';   // URL foglio: solo da localStorage
 const cfgOk = () => sg(K.D) === '1';
 const el    = id => document.getElementById(id);
+let sheetData = [];
 
 // ── HELPER URL ─────────────────────────────────────────────────
 // Estrae l'ID dal link Google Sheets inserito dall'admin
@@ -798,7 +799,13 @@ function ddUniq(col, q){
 }
 function ddRend(key, q){
   const c = DDS[key], cur = el(c.inp).value.trim(), list = ddUniq(c.col, q);
-  if(!list.length){ el(c.itm).innerHTML = '<div class="ddempty">Nessuna voce trovata</div>'; return; }
+  if(!list.length){
+    const msg = sheetData.length === 0
+      ? 'Dati foglio non caricati.<br>Verifica la configurazione admin.'
+      : 'Nessuna voce trovata';
+    el(c.itm).innerHTML = '<div class="ddempty">' + msg + '</div>';
+    return;
+  }
   const nq = q ? norm(q) : '';
   el(c.itm).innerHTML = list.map(v => {
     const isSel = norm(v) === norm(cur);
@@ -811,27 +818,33 @@ function ddRend(key, q){
          + '<div class="ddot"></div><span style="flex:1">' + lbl + '</span></div>';
   }).join('');
 }
-function ddOpen(key){
+async function ddOpen(key){
   if(ddCur && ddCur !== key) ddClose(ddCur);
   ddCur = key;
   const c = DDS[key], q = el(c.inp).value.trim();
   el(c.pan).classList.add('on'); el(c.arr).classList.add('open');
-  el(c.src).value = q; ddRend(key, q);
+  el(c.src).value = q;
+  // Se sheetData è vuoto, ricarica il foglio prima di mostrare il dropdown
+  if(!sheetData.length){
+    el(c.itm).innerHTML = '<div class="ddempty">Caricamento dati…</div>';
+    await loadSheet();
+  }
+  ddRend(key, q);
 }
 function ddClose(key){
   if(!key) return;
   el(DDS[key].pan).classList.remove('on'); el(DDS[key].arr).classList.remove('open');
   if(ddCur === key) ddCur = null;
 }
-function ddTog(key){
-  el(DDS[key].pan).classList.contains('on') ? ddClose(key) : (el(DDS[key].inp).focus(), ddOpen(key));
+async function ddTog(key){
+  el(DDS[key].pan).classList.contains('on') ? ddClose(key) : (el(DDS[key].inp).focus(), await ddOpen(key));
 }
-function ddInp(key){
+async function ddInp(key){
   const c = DDS[key], q = el(c.inp).value.trim();
   el(c.clr).classList.toggle('on', q.length > 0);
   el('er-'+key).classList.remove('on'); el(c.inp).classList.remove('err-i');
   el(c.src).value = q; ddRend(key, q);
-  if(!el(c.pan).classList.contains('on')) ddOpen(key);
+  if(!el(c.pan).classList.contains('on')) await ddOpen(key);
 }
 function ddSrch(key){ ddRend(key, el(DDS[key].src).value.trim()); }
 function ddPick(key, val){
