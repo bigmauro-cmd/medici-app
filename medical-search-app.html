@@ -824,7 +824,7 @@ const DDS = {
 let ddCur = null;
 
 function ddUniq(col, q){
-  const all = [...new Set(sheetData.map(r => r[col]).filter(v => v))].sort((a,b) => a.localeCompare(b,'it'));
+  const all = [...new Set(sheetData.map(r => r[col]).filter(v => v))].sort((a,b) => norm(a).localeCompare(norm(b),'it'));
   return q ? all.filter(v => norm(v).includes(norm(q))) : all;
 }
 function ddRend(key, q){
@@ -851,7 +851,15 @@ function ddRend(key, q){
 async function ddOpen(key){
   if(ddCur && ddCur !== key) ddClose(ddCur);
   ddCur = key;
-  const c = DDS[key], q = el(c.inp).value.trim();
+  const c = DDS[key];
+  // Se il campo ha un errore di "nessuna corrispondenza", svuotalo
+  if(el('er-'+key).classList.contains('on')){
+    el(c.inp).value = '';
+    el(c.clr).classList.remove('on');
+    el('er-'+key).classList.remove('on');
+    el(c.inp).classList.remove('err-i');
+  }
+  const q = el(c.inp).value.trim();
   el(c.pan).classList.add('on'); el(c.arr).classList.add('open');
   el(c.src).value = q;
   // Se sheetData è vuoto, ricarica il foglio prima di mostrare il dropdown
