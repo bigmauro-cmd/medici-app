@@ -965,7 +965,7 @@ function goDetail(){
   el('d-lbl').textContent  = (lastS1 || 'Specializzazione').toUpperCase();
   el('d-name').textContent = r.G || '—';
   el('d-spec').textContent = r.C || '';
-  el('d-tbody').innerHTML  = [['H','Colonna H'],['I','Colonna I'],['J','Colonna J'],['K','Colonna K'],['L','Colonna L'],['M','Colonna M'],['N','Colonna N']]
+  el('d-tbody').innerHTML  = [['H','Primario'],['I','Responsabile'],['J','Follow'],['K','Collabora'],['L','Membro che segue'],['M','Telefono contatto'],['N','E-mail']]
     .map(([c,l]) => '<tr><td>'+l+'</td><td>'+(esc(r[c])||'<span style="color:var(--g300)">—</span>')+'</td></tr>').join('');
   goTo('detail');
 }
