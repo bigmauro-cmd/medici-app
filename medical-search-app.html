@@ -1,0 +1,1099 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no"/>
+<title>Ricerca Professionisti Sanitari</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700&family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet"/>
+<style>
+:root{
+  --navy:#0a1628;--navy2:#162444;--blue:#1d4ed8;--ac:#3b82f6;--teal:#0ea5e9;
+  --g50:#f8fafc;--g100:#f1f5f9;--g200:#e2e8f0;--g300:#cbd5e1;--g400:#94a3b8;--g500:#64748b;--g700:#334155;
+  --red:#ef4444;--rbg:#fef2f2;--ora:#f59e0b;--obg:#fffbeb;--grn:#10b981;--gbg:#ecfdf5;
+  --sh:0 4px 16px rgba(10,22,40,.10);--shlg:0 12px 40px rgba(10,22,40,.18);--shxl:0 20px 60px rgba(10,22,40,.24);
+  --r:14px;--rs:9px;
+}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+body{font-family:'Outfit',sans-serif;background:var(--g50);color:var(--navy);min-height:100vh;line-height:1.5}
+
+/* HEADER */
+.hdr{background:linear-gradient(135deg,var(--navy),var(--navy2));padding:0 24px;height:64px;
+  display:flex;align-items:center;gap:16px;position:sticky;top:0;z-index:300;box-shadow:0 2px 20px rgba(0,0,0,.28)}
+.hdr-logo{display:flex;align-items:center;gap:11px;flex-shrink:0}
+#logo-img{height:40px;width:auto;object-fit:contain;filter:brightness(0) invert(1);display:none}
+#logo-fb{display:flex;align-items:center;gap:10px}
+.logo-icon{width:40px;height:40px;border-radius:10px;background:linear-gradient(135deg,var(--ac),var(--teal));
+  display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.logo-txt b{font-family:'Playfair Display',serif;font-size:1.05rem;color:#fff;display:block;line-height:1.1}
+.logo-txt small{font-size:.58rem;color:rgba(255,255,255,.45);letter-spacing:1.8px;text-transform:uppercase}
+.hdr-ttl{color:rgba(255,255,255,.38);font-size:.68rem;letter-spacing:2px;text-transform:uppercase;margin-left:auto;font-weight:400}
+.admbtn{flex-shrink:0;margin-left:8px;display:flex;align-items:center;gap:7px;padding:7px 15px;border-radius:8px;
+  border:1px solid rgba(255,255,255,.14);background:rgba(255,255,255,.07);color:rgba(255,255,255,.78);
+  font-family:'Outfit',sans-serif;font-size:.71rem;font-weight:600;letter-spacing:.9px;text-transform:uppercase;
+  cursor:pointer;transition:all .2s}
+.admbtn:hover{background:rgba(255,255,255,.14);color:#fff;border-color:rgba(255,255,255,.28)}
+@media(max-width:560px){
+  .hdr{padding:0 13px;height:56px}
+  #logo-img{height:32px}.logo-txt b{font-size:.9rem}.hdr-ttl{display:none}
+  .admbtn .albl{display:none}.admbtn{padding:7px 10px}
+}
+
+/* PAGES */
+.page{display:none;max-width:860px;margin:0 auto;padding:32px 20px 80px;width:100%}
+.page.active{display:block;animation:pf .22s ease}
+@keyframes pf{from{opacity:0;transform:translateY(7px)}to{opacity:1;transform:translateY(0)}}
+@media(max-width:560px){.page{padding:18px 12px 60px}}
+
+/* CARD */
+.card{background:#fff;border-radius:var(--r);box-shadow:var(--sh);padding:36px;margin-bottom:20px;border:1px solid var(--g200)}
+.card-ac{border-top:3px solid var(--ac)}
+@media(max-width:560px){.card{padding:20px 16px;border-radius:10px}}
+.ptitle{font-family:'Playfair Display',serif;font-size:1.85rem;color:var(--navy);margin-bottom:5px;line-height:1.2}
+.psub{color:var(--g400);font-size:.85rem;margin-bottom:26px;font-weight:400}
+.sec-lbl{font-size:.74rem;font-weight:700;letter-spacing:.8px;text-transform:uppercase;margin-bottom:11px}
+
+/* BADGE */
+.badge{display:inline-flex;align-items:center;gap:6px;padding:4px 13px;border-radius:20px;font-size:.69rem;font-weight:700;letter-spacing:.9px;text-transform:uppercase;margin-bottom:17px}
+.bdg-s{background:var(--gbg);color:var(--grn);border:1px solid #6ee7b7}
+.bdg-a{background:#fff7ed;color:#ea580c;border:1px solid #fdba74}
+
+/* FORM */
+.fg{margin-bottom:20px}
+.fg label{display:block;font-size:.71rem;font-weight:700;letter-spacing:.9px;text-transform:uppercase;color:var(--blue);margin-bottom:7px}
+.fg input[type=text],.fg input[type=password],.fg input[type=url]{
+  width:100%;padding:12px 16px;border:2px solid var(--g200);border-radius:var(--rs);
+  font-size:.92rem;font-family:'Outfit',sans-serif;color:var(--navy);background:var(--g50);
+  transition:border-color .18s,box-shadow .18s,background .18s;outline:none}
+.fg input:focus{border-color:var(--ac);box-shadow:0 0 0 3px rgba(59,130,246,.12);background:#fff}
+.fg input.err-i{border-color:var(--red)}
+.hint{font-size:.72rem;color:var(--g400);margin-top:5px}
+.em{color:var(--red);font-size:.79rem;margin-top:5px;font-weight:500;display:none}.em.on{display:block}
+.wbox,.obox{font-size:.84rem;padding:10px 14px;border-radius:8px;margin-top:10px;display:none}
+.wbox.on{display:block;color:var(--ora);background:var(--obg);border:1px solid #fcd34d}
+.obox.on{display:block;color:var(--grn);background:var(--gbg);border:1px solid #6ee7b7}
+.divider{height:1px;background:var(--g200);margin:22px 0}
+
+/* BUTTONS */
+.btn{display:inline-flex;align-items:center;gap:8px;padding:12px 26px;border:none;border-radius:var(--rs);font-family:'Outfit',sans-serif;font-size:.89rem;font-weight:600;cursor:pointer;transition:all .18s}
+.bp{background:var(--navy);color:#fff}.bp:hover{background:var(--navy2);transform:translateY(-1px);box-shadow:var(--sh)}
+.bb{background:var(--blue);color:#fff}.bb:hover{background:#1e40af;transform:translateY(-1px);box-shadow:var(--sh)}
+.bg{background:var(--g100);color:var(--navy);border:1.5px solid var(--g200)}.bg:hover{background:var(--g200)}
+.brd{background:var(--rbg);color:var(--red);border:1.5px solid #fecaca}.brd:hover{background:#fee2e2}
+.btn:disabled{opacity:.36;cursor:not-allowed;transform:none!important}
+.brow{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-top:6px}
+
+/* LOADER */
+.loader{display:none;position:fixed;inset:0;background:rgba(10,22,40,.55);z-index:900;align-items:center;justify-content:center}
+.loader.on{display:flex}
+.spin{width:44px;height:44px;border:4px solid rgba(255,255,255,.2);border-top-color:#fff;border-radius:50%;animation:rot .75s linear infinite}
+@keyframes rot{to{transform:rotate(360deg)}}
+
+/* MODAL */
+.modal{display:none;position:fixed;inset:0;background:rgba(10,22,40,.6);z-index:400;align-items:center;justify-content:center;padding:16px}
+.modal.on{display:flex}
+.mbox{background:#fff;border-radius:var(--r);padding:30px;width:100%;max-width:380px;box-shadow:var(--shxl);position:relative}
+.mx{position:absolute;top:12px;right:12px;background:var(--g100);border:none;width:30px;height:30px;border-radius:7px;cursor:pointer;display:flex;align-items:center;justify-content:center;color:var(--g500);font-size:1rem;transition:background .15s}.mx:hover{background:var(--g200)}
+.mtitle{font-family:'Playfair Display',serif;font-size:1.3rem;margin-bottom:4px}
+.msub{color:var(--g400);font-size:.81rem;margin-bottom:18px}
+
+/* DROPDOWN */
+.ddw{position:relative}
+.ddinp{padding-right:72px!important}
+.ddbtns{position:absolute;right:0;top:0;height:100%;display:flex;align-items:center;padding-right:6px}
+.ddib{width:30px;height:30px;border:none;background:none;cursor:pointer;display:flex;align-items:center;justify-content:center;border-radius:6px;transition:all .15s;color:var(--g400);flex-shrink:0}
+.ddib:hover{background:var(--g100);color:var(--ac)}
+.ddclr{display:none}.ddclr.on{display:flex}
+.ddchv svg{transition:transform .2s}.ddchv.open svg{transform:rotate(180deg);color:var(--ac)}
+.ddpanel{display:none;position:absolute;top:calc(100% + 5px);left:0;right:0;background:#fff;border:2px solid var(--ac);border-radius:var(--rs);box-shadow:var(--shlg);z-index:250;overflow:hidden}
+.ddpanel.on{display:flex;flex-direction:column;animation:ddin .13s ease}
+@keyframes ddin{from{opacity:0;transform:translateY(-5px)}to{opacity:1;transform:translateY(0)}}
+.ddsr{padding:8px 10px;border-bottom:1px solid var(--g100);flex-shrink:0;background:var(--g50)}
+.ddsr input{width:100%;padding:7px 11px;border:1.5px solid var(--g200);border-radius:6px;font-size:.82rem;font-family:'Outfit',sans-serif;color:var(--navy);background:#fff;outline:none}
+.ddsr input:focus{border-color:var(--ac)}
+.ddscr{max-height:210px;overflow-y:auto;overscroll-behavior:contain}
+.ddi{padding:10px 14px;cursor:pointer;font-size:.87rem;color:var(--g700);transition:background .1s;display:flex;align-items:center;gap:9px;border-bottom:1px solid var(--g100)}
+.ddi:last-child{border-bottom:none}
+.ddi:hover,.ddi.hi{background:var(--g50)}
+.ddi.sel{background:#eff6ff;color:var(--blue);font-weight:600}
+.ddi mark{background:none;color:var(--ac);font-weight:700;padding:0}
+.ddot{width:6px;height:6px;border-radius:50%;background:var(--g300);flex-shrink:0}
+.ddi.sel .ddot{background:var(--ac)}
+.ddempty{padding:16px;text-align:center;color:var(--g400);font-size:.82rem}
+
+/* STATUS ROWS */
+.strow{display:flex;align-items:center;gap:10px;padding:10px 14px;background:var(--g50);border-radius:8px;margin-bottom:7px;font-size:.83rem;border:1px solid var(--g100)}
+.stdot{width:9px;height:9px;border-radius:50%;flex-shrink:0}
+.stdot.ok{background:var(--grn)}.stdot.ko{background:var(--red)}
+
+/* LINK TEST */
+.testrow{display:flex;align-items:center;gap:8px;margin-top:9px;flex-wrap:wrap}
+.tbtn{display:inline-flex;align-items:center;gap:6px;padding:6px 14px;border-radius:7px;border:1.5px solid var(--g200);background:var(--g50);color:var(--g500);font-family:'Outfit',sans-serif;font-size:.77rem;font-weight:600;cursor:pointer;transition:all .18s;text-decoration:none;white-space:nowrap}
+.tbtn:hover{background:var(--g100);border-color:var(--g300);color:var(--navy)}
+.tbtn.topen{background:#eff6ff;border-color:#bfdbfe;color:var(--blue)}.tbtn.topen:hover{background:#dbeafe;color:#1e40af}
+.tres{margin-top:10px;border-radius:9px;overflow:hidden;display:none}.tres.on{display:block;animation:pf .2s ease}
+.tcard{padding:13px 16px;font-size:.82rem;line-height:1.5}
+.tok{background:var(--gbg);border:1px solid #6ee7b7}
+.terr{background:var(--rbg);border:1px solid #fecaca}
+.twrn{background:var(--obg);border:1px solid #fcd34d}
+.th2{display:flex;align-items:center;gap:9px;font-weight:700;margin-bottom:5px;font-size:.84rem}
+.tico{width:20px;height:20px;border-radius:50%;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:.73rem}
+.tok .tico{background:#6ee7b7;color:#065f46}.tok .th2{color:#065f46}
+.terr .tico{background:#fca5a5;color:#7f1d1d}.terr .th2{color:#991b1b}
+.twrn .tico{background:#fcd34d;color:#78350f}.twrn .th2{color:#92400e}
+.tdet{color:var(--g500);font-size:.79rem;padding-left:29px}
+.tgrid{display:grid;grid-template-columns:auto 1fr;gap:4px 12px;padding-left:29px;margin-top:6px;font-size:.78rem}
+.tgl{color:var(--g400);font-weight:600;white-space:nowrap}.tgv{color:var(--g700);word-break:break-all}
+.lprev{display:none;margin-top:12px}
+.lprev-lbl{font-size:.71rem;font-weight:700;letter-spacing:.7px;text-transform:uppercase;color:var(--blue);margin-bottom:8px}
+.lprev-box{background:var(--navy);border-radius:10px;padding:14px 18px;display:inline-flex;align-items:center;gap:12px}
+.lprev-box img{height:44px;width:auto;object-fit:contain;filter:brightness(0) invert(1)}
+.lprev-box span{color:rgba(255,255,255,.4);font-size:.72rem}
+
+/* TABLE */
+.tw{overflow-x:auto;border-radius:var(--rs);border:1px solid var(--g200)}
+table{width:100%;border-collapse:collapse;font-size:.85rem}
+thead tr{background:var(--navy);color:#fff}
+thead th{padding:12px 13px;text-align:left;font-weight:600;font-size:.71rem;letter-spacing:.7px;text-transform:uppercase;white-space:nowrap}
+tbody tr{border-bottom:1px solid var(--g100);transition:background .12s;cursor:pointer}
+tbody tr:last-child{border-bottom:none}
+tbody tr:hover{background:#f0f9ff}
+tbody tr.sr{background:#dbeafe}
+tbody td{padding:11px 13px;color:var(--g500);vertical-align:middle}
+tbody td:first-child{text-align:center;width:42px}
+input[type=checkbox]{width:17px;height:17px;accent-color:var(--blue);cursor:pointer}
+
+/* DETAIL */
+.phdr{border-radius:var(--r);padding:26px 30px;margin-bottom:20px;background:linear-gradient(135deg,var(--navy) 0%,#1e3a5f 50%,var(--blue) 100%);color:#fff;position:relative;overflow:hidden}
+.phdr::before{content:'';position:absolute;right:-40px;top:-40px;width:180px;height:180px;border-radius:50%;background:rgba(255,255,255,.04)}
+.phlbl{font-size:.67rem;letter-spacing:1.8px;text-transform:uppercase;color:rgba(255,255,255,.5);margin-bottom:4px}
+.phname{font-family:'Playfair Display',serif;font-size:1.9rem;line-height:1.1;margin-bottom:5px}
+.phspec{color:rgba(255,255,255,.62);font-size:.87rem}
+@media(max-width:560px){.phdr{padding:18px 16px}.phname{font-size:1.4rem}}
+.dtbl{width:100%;border-collapse:collapse}
+.dtbl tr{border-bottom:1px solid var(--g100)}.dtbl tr:last-child{border-bottom:none}
+.dtbl td{padding:12px 16px;vertical-align:top}
+.dtbl td:first-child{font-weight:600;color:var(--blue);font-size:.71rem;text-transform:uppercase;letter-spacing:.6px;background:var(--g50);border-right:1px solid var(--g100);width:36%;white-space:nowrap}
+.nores{text-align:center;padding:36px 20px;color:var(--g300)}
+</style>
+</head>
+<body>
+
+<!-- HEADER -->
+<header class="hdr">
+  <div class="hdr-logo">
+    <img id="logo-img" src="" alt="Logo" onerror="logoErr()"/>
+    <div id="logo-fb" style="align-items:center;gap:10px">
+      <div class="logo-icon">
+        <svg width="22" height="22" viewBox="0 0 22 22" fill="none">
+          <rect x="9" y="2" width="4" height="18" rx="2" fill="white"/>
+          <rect x="2" y="9" width="18" height="4" rx="2" fill="white"/>
+        </svg>
+      </div>
+      <div class="logo-txt"><b>MediciFind</b><small>Professionisti</small></div>
+    </div>
+  </div>
+  <span class="hdr-ttl">Ricerca Professionisti Sanitari</span>
+  <button class="admbtn" onclick="openAdmModal()">
+    <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/></svg>
+    <span class="albl">Amministratore</span>
+  </button>
+</header>
+
+<!-- LOADER -->
+<div class="loader" id="loader"><div class="spin"></div></div>
+
+<!-- MODAL: admin password -->
+<div class="modal" id="modal-adm">
+  <div class="mbox">
+    <button class="mx" onclick="closeAdmModal()">✕</button>
+    <div class="mtitle">Accesso Amministratore</div>
+    <div class="msub">Inserire la password amministratore</div>
+    <div class="fg">
+      <label>Password</label>
+      <input type="password" id="m-psw" placeholder="••••••••" autocomplete="off"/>
+      <div class="em" id="m-err">Password non corretta</div>
+    </div>
+    <div class="brow">
+      <button class="btn bp" onclick="doAdmLogin()">Entra</button>
+      <button class="btn bg" onclick="closeAdmModal()">Annulla</button>
+    </div>
+  </div>
+</div>
+
+<!-- PAGE: SETUP -->
+<div class="page" id="page-setup">
+  <div class="card card-ac">
+    <div class="badge bdg-s">✔ Configurazione iniziale</div>
+    <div class="ptitle">Benvenuto, Amministratore</div>
+    <div class="psub">Primo accesso rilevato — configura l'app una volta sola.</div>
+
+    <div class="fg"><label>Nuova Password Amministratore</label>
+      <input type="password" id="s-a1" placeholder="Scegli una password sicura"/>
+      <div class="hint">Sostituisce la password provvisoria <b>"admin"</b></div>
+      <div class="em" id="e-sa1">Campo obbligatorio</div>
+    </div>
+    <div class="fg"><label>Conferma Password Amministratore</label>
+      <input type="password" id="s-a2" placeholder="Ripeti la password admin"/>
+      <div class="em" id="e-sa2">Le password non corrispondono</div>
+    </div>
+    <div class="fg"><label>Password Pubblica</label>
+      <input type="password" id="s-p1" placeholder="Password per utenti autorizzati"/>
+      <div class="hint">Sostituisce la password provvisoria <b>"public"</b></div>
+      <div class="em" id="e-sp1">Campo obbligatorio</div>
+    </div>
+    <div class="fg"><label>Conferma Password Pubblica</label>
+      <input type="password" id="s-p2" placeholder="Ripeti la password pubblica"/>
+      <div class="em" id="e-sp2">Le password non corrispondono</div>
+    </div>
+
+    <div class="fg"><label>Link Foglio Google Sheets</label>
+      <input type="url" id="s-sh" placeholder="https://docs.google.com/spreadsheets/d/..."/>
+      <div class="hint">Deve essere un <b>foglio Google Sheets nativo</b> — se hai un file .xlsx aprilo con Google Sheets e usa il link di quel foglio</div>
+      <div class="em" id="e-ssh">URL non valido — verificare che contenga l'ID del foglio Google Sheets</div>
+      <div class="testrow">
+        <button class="tbtn" onclick="testSheet('s-sh','str-sh','soa-sh')">
+          <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><polyline points="12 7 12 12 15 15"/></svg>
+          Testa collegamento
+        </button>
+        <a class="tbtn topen" id="soa-sh" href="#" target="_blank" rel="noopener" style="display:none">
+          <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
+          Apri nel browser
+        </a>
+      </div>
+      <div class="tres" id="str-sh"></div>
+    </div>
+
+    <div class="fg"><label>Link Logo Google Drive — opzionale</label>
+      <input type="url" id="s-lo" placeholder="https://drive.google.com/file/d/..."/>
+      <div class="testrow">
+        <button class="tbtn" onclick="testLogo('s-lo','str-lo','soa-lo','slp')">
+          <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><polyline points="12 7 12 12 15 15"/></svg>
+          Testa collegamento
+        </button>
+        <a class="tbtn topen" id="soa-lo" href="#" target="_blank" rel="noopener" style="display:none">
+          <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
+          Apri nel browser
+        </a>
+      </div>
+      <div class="tres" id="str-lo"></div>
+      <div class="lprev" id="slp">
+        <div class="lprev-lbl">Anteprima logo</div>
+        <div class="lprev-box"><img id="slp-img" src="" alt="logo"/><span>Anteprima header</span></div>
+      </div>
+    </div>
+
+    <div class="divider"></div>
+    <div class="brow">
+      <button class="btn bp" onclick="doSetupSave()">
+        <svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>
+        Salva e Avvia l'App
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- PAGE: ADMIN PANEL -->
+<div class="page" id="page-admin">
+  <div class="card card-ac">
+    <div class="badge bdg-a">⚙ Pannello Amministratore</div>
+    <div class="ptitle">Impostazioni App</div>
+    <div class="psub">Modifica password e riferimenti dati. Lascia vuoto un campo password per non modificarlo.</div>
+    <div id="adm-status" style="margin-bottom:22px"></div>
+
+    <div class="fg"><label>Nuova Password Amministratore</label>
+      <input type="password" id="a-a1" placeholder="Lascia vuoto per non modificare"/>
+    </div>
+    <div class="fg"><label>Conferma Nuova Password Amministratore</label>
+      <input type="password" id="a-a2" placeholder="Ripeti la nuova password admin"/>
+      <div class="em" id="e-aa2">Le password non corrispondono</div>
+    </div>
+    <div class="fg"><label>Nuova Password Pubblica</label>
+      <input type="password" id="a-p1" placeholder="Lascia vuoto per non modificare"/>
+    </div>
+    <div class="fg"><label>Conferma Nuova Password Pubblica</label>
+      <input type="password" id="a-p2" placeholder="Ripeti la nuova password pubblica"/>
+      <div class="em" id="e-ap2">Le password non corrispondono</div>
+    </div>
+
+    <div class="fg"><label>Link Foglio Google Sheets</label>
+      <input type="url" id="a-sh" placeholder="https://docs.google.com/spreadsheets/d/..."/>
+      <div class="em" id="e-ash">URL non valido — deve essere un foglio Google Sheets nativo</div>
+      <div class="testrow">
+        <button class="tbtn" onclick="testSheet('a-sh','atr-sh','aoa-sh')">
+          <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><polyline points="12 7 12 12 15 15"/></svg>
+          Testa collegamento
+        </button>
+        <a class="tbtn topen" id="aoa-sh" href="#" target="_blank" rel="noopener" style="display:none">
+          <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
+          Apri nel browser
+        </a>
+      </div>
+      <div class="tres" id="atr-sh"></div>
+    </div>
+
+    <div class="fg"><label>Link Logo Google Drive</label>
+      <input type="url" id="a-lo" placeholder="https://drive.google.com/file/d/..."/>
+      <div class="testrow">
+        <button class="tbtn" onclick="testLogo('a-lo','atr-lo','aoa-lo','alp')">
+          <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><polyline points="12 7 12 12 15 15"/></svg>
+          Testa collegamento
+        </button>
+        <a class="tbtn topen" id="aoa-lo" href="#" target="_blank" rel="noopener" style="display:none">
+          <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
+          Apri nel browser
+        </a>
+      </div>
+      <div class="tres" id="atr-lo"></div>
+      <div class="lprev" id="alp">
+        <div class="lprev-lbl">Anteprima logo</div>
+        <div class="lprev-box"><img id="alp-img" src="" alt="logo"/><span>Anteprima header</span></div>
+      </div>
+    </div>
+
+    <div class="obox" id="a-ok">✔ Impostazioni salvate con successo!</div>
+    <div class="wbox" id="a-warn"></div>
+    <div class="divider"></div>
+    <div class="brow">
+      <button class="btn bp" onclick="doAdmSave()">
+        <svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>
+        Salva Modifiche
+      </button>
+      <button class="btn bg" onclick="backFromAdm()">
+        <svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><polyline points="15 18 9 12 15 6"/></svg>
+        Torna all'App
+      </button>
+    </div>
+
+    <div class="divider"></div>
+    <div class="sec-lbl" style="color:var(--blue)">📦 Trasferimento Configurazione</div>
+    <p style="font-size:.82rem;color:var(--g500);margin-bottom:13px;line-height:1.6">
+      <b>Esporta</b> per salvare le impostazioni in un file <code style="background:var(--g100);padding:1px 5px;border-radius:4px">.json</code> trasferibile su altri dispositivi.
+      <b>Importa</b> per ripristinare da un file esportato in precedenza.
+    </p>
+    <div class="brow" style="margin-bottom:10px">
+      <button class="btn bb" onclick="expCfg()">
+        <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+        Esporta
+      </button>
+      <label class="btn bg" style="cursor:pointer;margin:0">
+        <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+        Importa
+        <input type="file" id="imp-file" accept=".json" style="display:none" onchange="impCfg(event)"/>
+      </label>
+    </div>
+    <div class="obox" id="imp-ok">✔ Configurazione importata! Effettua nuovamente il login per applicare.</div>
+    <div class="wbox" id="imp-warn"></div>
+
+    <div class="divider"></div>
+    <div class="sec-lbl" style="color:var(--red)">⚠ Zona Pericolosa</div>
+    <button class="btn brd" onclick="doReset()">
+      <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/></svg>
+      Ripristina impostazioni di fabbrica
+    </button>
+  </div>
+</div>
+
+<!-- PAGE: LOGIN -->
+<div class="page active" id="page-login">
+  <div style="max-width:400px;margin:52px auto 0">
+    <div class="card">
+      <div class="ptitle">Accesso Riservato</div>
+      <div class="psub">Inserire la password per accedere all'applicazione</div>
+      <div class="fg">
+        <label>Password</label>
+        <input type="password" id="l-psw" placeholder="••••••••" autocomplete="off"/>
+        <div class="em" id="l-err">Non autorizzato, contattare l'amministratore</div>
+      </div>
+      <div class="brow">
+        <button class="btn bp" onclick="doLogin()">
+          <svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/><polyline points="10 17 15 12 10 7"/><line x1="15" y1="12" x2="3" y2="12"/></svg>
+          Accedi
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- PAGE: RICERCA -->
+<div class="page" id="page-input">
+  <div class="card">
+    <div class="ptitle">Ricerca Professionista</div>
+    <div class="psub">Digita oppure scegli dal menù a tendina — uno o più campi</div>
+
+    <div class="fg">
+      <label>Specializzazione Principale <span style="color:var(--ac)">[SPEC1]</span></label>
+      <div class="ddw">
+        <input class="ddinp" type="text" id="i-s1" placeholder="Digita o scegli…" autocomplete="off"
+          oninput="ddInp('s1')" onfocus="ddOpen('s1')" onkeydown="ddKey(event,'s1')"/>
+        <div class="ddbtns">
+          <button class="ddib ddclr" id="dc-s1" onclick="ddClr('s1')" tabindex="-1">
+            <svg width="11" height="11" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+          </button>
+          <button class="ddib ddchv" id="dv-s1" onclick="ddTog('s1')" tabindex="-1">
+            <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"/></svg>
+          </button>
+        </div>
+        <div class="ddpanel" id="dp-s1">
+          <div class="ddsr"><input type="text" id="ds-s1" placeholder="Cerca nella lista…" oninput="ddSrch('s1')" onkeydown="ddKey(event,'s1')"/></div>
+          <div class="ddscr" id="di-s1"></div>
+        </div>
+      </div>
+      <div class="em" id="er-s1">Nessuna corrispondenza trovata</div>
+    </div>
+
+    <div class="fg">
+      <label>Reparto Ospedaliero <span style="color:var(--ac)">[REP]</span></label>
+      <div class="ddw">
+        <input class="ddinp" type="text" id="i-rp" placeholder="Digita o scegli…" autocomplete="off"
+          oninput="ddInp('rp')" onfocus="ddOpen('rp')" onkeydown="ddKey(event,'rp')"/>
+        <div class="ddbtns">
+          <button class="ddib ddclr" id="dc-rp" onclick="ddClr('rp')" tabindex="-1">
+            <svg width="11" height="11" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+          </button>
+          <button class="ddib ddchv" id="dv-rp" onclick="ddTog('rp')" tabindex="-1">
+            <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"/></svg>
+          </button>
+        </div>
+        <div class="ddpanel" id="dp-rp">
+          <div class="ddsr"><input type="text" id="ds-rp" placeholder="Cerca nella lista…" oninput="ddSrch('rp')" onkeydown="ddKey(event,'rp')"/></div>
+          <div class="ddscr" id="di-rp"></div>
+        </div>
+      </div>
+      <div class="em" id="er-rp">Nessuna corrispondenza trovata</div>
+    </div>
+
+    <div class="fg">
+      <label>Specializzazione <span style="color:var(--ac)">[SPEC2]</span></label>
+      <div class="ddw">
+        <input class="ddinp" type="text" id="i-s2" placeholder="Digita o scegli…" autocomplete="off"
+          oninput="ddInp('s2')" onfocus="ddOpen('s2')" onkeydown="ddKey(event,'s2')"/>
+        <div class="ddbtns">
+          <button class="ddib ddclr" id="dc-s2" onclick="ddClr('s2')" tabindex="-1">
+            <svg width="11" height="11" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+          </button>
+          <button class="ddib ddchv" id="dv-s2" onclick="ddTog('s2')" tabindex="-1">
+            <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"/></svg>
+          </button>
+        </div>
+        <div class="ddpanel" id="dp-s2">
+          <div class="ddsr"><input type="text" id="ds-s2" placeholder="Cerca nella lista…" oninput="ddSrch('s2')" onkeydown="ddKey(event,'s2')"/></div>
+          <div class="ddscr" id="di-s2"></div>
+        </div>
+      </div>
+      <div class="em" id="er-s2">Nessuna corrispondenza trovata</div>
+    </div>
+
+    <div class="fg">
+      <label>Città <span style="color:var(--ac)">[CITTÀ]</span></label>
+      <div class="ddw">
+        <input class="ddinp" type="text" id="i-ct" placeholder="Digita o scegli…" autocomplete="off"
+          oninput="ddInp('ct')" onfocus="ddOpen('ct')" onkeydown="ddKey(event,'ct')"/>
+        <div class="ddbtns">
+          <button class="ddib ddclr" id="dc-ct" onclick="ddClr('ct')" tabindex="-1">
+            <svg width="11" height="11" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+          </button>
+          <button class="ddib ddchv" id="dv-ct" onclick="ddTog('ct')" tabindex="-1">
+            <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"/></svg>
+          </button>
+        </div>
+        <div class="ddpanel" id="dp-ct">
+          <div class="ddsr"><input type="text" id="ds-ct" placeholder="Cerca nella lista…" oninput="ddSrch('ct')" onkeydown="ddKey(event,'ct')"/></div>
+          <div class="ddscr" id="di-ct"></div>
+        </div>
+      </div>
+      <div class="em" id="er-ct">Nessuna corrispondenza trovata</div>
+    </div>
+
+    <div class="wbox" id="er-empty">Inserire almeno un criterio di ricerca</div>
+    <div class="divider"></div>
+    <div class="brow">
+      <button class="btn bp" onclick="doSearch()">
+        <svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+        Cerca
+      </button>
+      <button class="btn bg" onclick="goTo('login')">
+        <svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><polyline points="15 18 9 12 15 6"/></svg>
+        Indietro
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- PAGE: RISULTATI -->
+<div class="page" id="page-results">
+  <div class="card">
+    <div class="ptitle">Risultati della Ricerca</div>
+    <div class="psub" id="res-sub"></div>
+    <div id="res-body"></div>
+    <div class="divider"></div>
+    <div class="brow">
+      <button class="btn bb" id="btn-det" onclick="goDetail()" disabled>
+        <svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+        Visualizza Dettaglio
+      </button>
+      <button class="btn bg" onclick="goTo('input')">
+        <svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><polyline points="15 18 9 12 15 6"/></svg>
+        Nuova Ricerca
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- PAGE: DETTAGLIO -->
+<div class="page" id="page-detail">
+  <div class="phdr">
+    <div class="phlbl" id="d-lbl"></div>
+    <div class="phname" id="d-name"></div>
+    <div class="phspec" id="d-spec"></div>
+  </div>
+  <div class="card">
+    <div class="ptitle" style="font-size:1.15rem;margin-bottom:18px">Informazioni di dettaglio</div>
+    <div class="tw"><table class="dtbl"><tbody id="d-tbody"></tbody></table></div>
+    <div class="divider"></div>
+    <div class="brow">
+      <button class="btn bg" onclick="goTo('results')">
+        <svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><polyline points="15 18 9 12 15 6"/></svg>
+        Torna ai Risultati
+      </button>
+      <button class="btn bg" onclick="goTo('input')">
+        <svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><polyline points="11 17 6 12 11 7"/><polyline points="18 17 13 12 18 7"/></svg>
+        Nuova Ricerca
+      </button>
+    </div>
+  </div>
+</div>
+
+<script>
+'use strict';
+
+// ── CHIAVI LOCALSTORAGE ────────────────────────────────────────
+// Nessun URL predefinito nello script.
+// Tutti i dati di configurazione provengono ESCLUSIVAMENTE
+// dagli input inseriti dall'amministratore tramite il pannello.
+const K = { A:'_adm', P:'_pub', S:'_sht', L:'_lgo', D:'_done' };
+
+// Password provvisorie solo per il primo login amministratore
+const DA = 'admin';   // accesso iniziale al pannello admin
+const DP = 'public';  // solo per completare il setup
+
+const sg    = k => localStorage.getItem(k);
+const ss    = (k,v) => localStorage.setItem(k,v);
+const admP  = () => sg(K.A) || DA;
+const pubP  = () => sg(K.P) || DP;
+const shtU  = () => sg(K.S) || '';   // URL foglio: solo da localStorage
+const lgoU  = () => sg(K.L) || '';   // URL logo:   solo da localStorage
+const cfgOk = () => sg(K.D) === '1';
+const el    = id => document.getElementById(id);
+
+// ── HELPER URL ─────────────────────────────────────────────────
+// Estrae l'ID dal link Google Sheets inserito dall'admin
+// Estrae l'ID da qualsiasi link Google Drive inserito dall'admin
+// Supporta: /file/d/ID  /spreadsheets/d/ID  ?id=ID  /d/ID
+// Estrae l'ID foglio da un link Google Sheets inserito dall'admin
+function shtId(u){
+  if(!u) return null;
+  const m = u.match(/\/spreadsheets\/d\/([a-zA-Z0-9_-]+)/);
+  return m ? m[1] : null;
+}
+
+// Estrae l'ID file da un link Google Drive inserito dall'admin
+function fileId(u){
+  if(!u) return null;
+  const m = u.match(/\/file\/d\/([a-zA-Z0-9_-]+)/);
+  if(m) return m[1];
+  const m2 = u.match(/[?&]id=([a-zA-Z0-9_-]+)/);
+  return m2 ? m2[1] : null;
+}
+
+// Costruisce l'URL API gviz/tq del foglio Google Sheets nativo
+// Questo endpoint non ha problemi CORS ed è l'unico affidabile lato browser
+function gvizUrl(){
+  const u = shtU(); // letto da localStorage, mai hardcoded
+  const id = shtId(u);
+  return id ? 'https://docs.google.com/spreadsheets/d/' + id + '/gviz/tq?tqx=out:json' : null;
+}
+
+// Costruisce l'URL diretto dell'immagine da un link Drive inserito dall'admin
+function lgoSrc(u){
+  const id = fileId(u);
+  return id ? 'https://drive.google.com/uc?export=view&id=' + id : u;
+}
+
+function esc(t){ return (t||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+function norm(t){ return (t||'').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').trim(); }
+function trunc(s,n=58){ return s.length>n ? s.slice(0,n-1)+'…' : s; }
+
+// ── LOGO ───────────────────────────────────────────────────────
+// Il logo viene caricato SOLO se l'admin ha inserito un URL valido
+function loadLogo(){
+  const u   = lgoU(); // da localStorage
+  const img = el('logo-img');
+  const fb  = el('logo-fb');
+  if(u){
+    img.src = lgoSrc(u); // URL derivato dall'input admin
+    img.style.display = '';
+    fb.style.display  = 'none';
+  } else {
+    img.style.display = 'none';
+    fb.style.display  = 'flex';
+  }
+}
+function logoErr(){
+  el('logo-img').style.display = 'none';
+  el('logo-fb').style.display  = 'flex';
+}
+
+// ── PAGE NAV ───────────────────────────────────────────────────
+function goTo(id){
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  el('page-'+id).classList.add('active');
+  window.scrollTo(0,0);
+  if(id === 'input') resetSearch();
+}
+function setLoad(v){ el('loader').classList.toggle('on', v); }
+
+// ── INIT ───────────────────────────────────────────────────────
+window.addEventListener('DOMContentLoaded', () => {
+  loadLogo();
+  goTo('login');
+  setTimeout(() => el('l-psw').focus(), 80);
+});
+
+// ── MODAL ADMIN ────────────────────────────────────────────────
+function openAdmModal(){
+  el('m-psw').value = '';
+  el('m-err').classList.remove('on');
+  el('modal-adm').classList.add('on');
+  setTimeout(() => el('m-psw').focus(), 80);
+}
+function closeAdmModal(){ el('modal-adm').classList.remove('on'); }
+el('m-psw').addEventListener('keydown', e => {
+  if(e.key === 'Enter')  doAdmLogin();
+  if(e.key === 'Escape') closeAdmModal();
+});
+function doAdmLogin(){
+  if(el('m-psw').value === admP()){
+    closeAdmModal();
+    cfgOk() ? openAdmPanel() : openSetup();
+  } else {
+    el('m-err').classList.add('on');
+  }
+}
+
+// ── SETUP ──────────────────────────────────────────────────────
+function openSetup(){
+  ['s-a1','s-a2','s-p1','s-p2','s-sh','s-lo'].forEach(id => el(id).value = '');
+  ['e-sa1','e-sa2','e-sp1','e-sp2','e-ssh'].forEach(id => el(id).classList.remove('on'));
+  ['str-sh','str-lo'].forEach(id => el(id).className = 'tres');
+  ['soa-sh','soa-lo'].forEach(id => el(id).style.display = 'none');
+  el('slp').style.display = 'none';
+  goTo('setup');
+}
+
+function doSetupSave(){
+  const a1 = el('s-a1').value.trim(), a2 = el('s-a2').value.trim();
+  const p1 = el('s-p1').value.trim(), p2 = el('s-p2').value.trim();
+  const sh = el('s-sh').value.trim(), lo = el('s-lo').value.trim();
+  ['e-sa1','e-sa2','e-sp1','e-sp2','e-ssh'].forEach(id => el(id).classList.remove('on'));
+  let ok = true;
+  if(!a1){ el('e-sa1').classList.add('on'); ok = false; }
+  if(a1 && a1 !== a2){ el('e-sa2').classList.add('on'); ok = false; }
+  if(!p1){ el('e-sp1').classList.add('on'); ok = false; }
+  if(p1 && p1 !== p2){ el('e-sp2').classList.add('on'); ok = false; }
+  if(!sh || !shtId(sh)){ el('e-ssh').classList.add('on'); ok = false; }
+  if(!ok) return;
+  // Salva in localStorage solo i valori inseriti dall'admin
+  ss(K.A, a1);
+  ss(K.P, p1);
+  ss(K.S, sh);          // URL foglio: da input admin
+  if(lo) ss(K.L, lo);   // URL logo:   da input admin (opzionale)
+  ss(K.D, '1');
+  sheetData = [];
+  loadLogo();
+  alert("✔ Configurazione salvata! L'app è pronta.");
+  goTo('input');
+}
+
+// ── ADMIN PANEL ────────────────────────────────────────────────
+function openAdmPanel(){
+  ['a-a1','a-a2','a-p1','a-p2'].forEach(id => el(id).value = '');
+  el('a-sh').value = shtU();  // mostra il valore attuale da localStorage
+  el('a-lo').value = lgoU();  // mostra il valore attuale da localStorage
+  ['e-aa2','e-ap2','e-ash'].forEach(id => el(id).classList.remove('on'));
+  ['a-ok','a-warn','imp-ok','imp-warn'].forEach(id => el(id).classList.remove('on'));
+  ['atr-sh','atr-lo'].forEach(id => el(id).className = 'tres');
+  ['aoa-sh','aoa-lo'].forEach(id => el(id).style.display = 'none');
+  el('alp').style.display = 'none';
+  el('adm-status').innerHTML = `
+    <div class="strow"><div class="stdot ok"></div><b>Password amministratore:</b>&nbsp;configurata</div>
+    <div class="strow"><div class="stdot ok"></div><b>Password pubblica:</b>&nbsp;configurata</div>
+    <div class="strow"><div class="stdot ${shtU() ? 'ok' : 'ko'}"></div><b>Foglio dati:</b>&nbsp;${shtU() ? trunc(shtU()) : '<span style="color:var(--red)">non configurato</span>'}</div>
+    <div class="strow"><div class="stdot ${lgoU() ? 'ok' : 'ko'}"></div><b>Logo:</b>&nbsp;${lgoU() ? trunc(lgoU()) : '<span style="color:var(--g400)">non configurato</span>'}</div>`;
+  goTo('admin');
+}
+
+function doAdmSave(){
+  const a1 = el('a-a1').value.trim(), a2 = el('a-a2').value.trim();
+  const p1 = el('a-p1').value.trim(), p2 = el('a-p2').value.trim();
+  const sh = el('a-sh').value.trim(), lo = el('a-lo').value.trim();
+  ['e-aa2','e-ap2','e-ash'].forEach(id => el(id).classList.remove('on'));
+  el('a-ok').classList.remove('on');
+  let ok = true;
+  if(a1 && a1 !== a2){ el('e-aa2').classList.add('on'); ok = false; }
+  if(p1 && p1 !== p2){ el('e-ap2').classList.add('on'); ok = false; }
+  if(sh && !shtId(sh)){ el('e-ash').classList.add('on'); ok = false; }
+  if(!ok) return;
+  // Aggiorna localStorage solo con i nuovi valori inseriti dall'admin
+  if(a1) ss(K.A, a1);
+  if(p1) ss(K.P, p1);
+  if(sh) ss(K.S, sh);   // URL foglio: da input admin
+  if(lo) ss(K.L, lo);   // URL logo:   da input admin
+  sheetData = [];
+  loadLogo();
+  el('a-ok').classList.add('on');
+  setTimeout(openAdmPanel, 700);
+}
+
+function backFromAdm(){ goTo(cfgOk() ? 'input' : 'login'); }
+
+// ── OBFUSCATION PER EXPORT ─────────────────────────────────────
+const OBK = 'MFC2024!';
+function obf(t){
+  let o = '';
+  for(let i = 0; i < t.length; i++) o += String.fromCharCode(t.charCodeAt(i) ^ OBK.charCodeAt(i % OBK.length));
+  return btoa(unescape(encodeURIComponent(o)));
+}
+function dob(b){
+  try{
+    const t = decodeURIComponent(escape(atob(b)));
+    let o = '';
+    for(let i = 0; i < t.length; i++) o += String.fromCharCode(t.charCodeAt(i) ^ OBK.charCodeAt(i % OBK.length));
+    return o;
+  } catch{ return ''; }
+}
+
+// ── EXPORT / IMPORT / RESET ────────────────────────────────────
+function expCfg(){
+  const d = {
+    _v: 1,
+    _date: new Date().toISOString(),
+    adm:  obf(admP()),
+    pub:  obf(pubP()),
+    sht:  shtU(),   // URL foglio da localStorage (inserito dall'admin)
+    lgo:  lgoU(),   // URL logo  da localStorage (inserito dall'admin)
+    done: sg(K.D) || '0'
+  };
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(new Blob([JSON.stringify(d, null, 2)], { type:'application/json' }));
+  a.download = 'config-app-' + new Date().toISOString().slice(0,10) + '.json';
+  document.body.appendChild(a); a.click(); document.body.removeChild(a);
+}
+function impCfg(ev){
+  const f = ev.target.files[0]; if(!f) return;
+  ['imp-ok','imp-warn'].forEach(id => el(id).classList.remove('on'));
+  const r = new FileReader();
+  r.onload = e => {
+    try{
+      const d = JSON.parse(e.target.result);
+      if(d._v !== 1 || !d.adm || !d.pub) throw new Error('File non valido o incompleto');
+      ss(K.A, dob(d.adm));
+      ss(K.P, dob(d.pub));
+      if(d.sht) ss(K.S, d.sht);
+      if(d.lgo) ss(K.L, d.lgo);
+      ss(K.D, d.done || '1');
+      sheetData = []; loadLogo();
+      el('imp-ok').classList.add('on');
+      setTimeout(openAdmPanel, 600);
+    } catch(err){
+      const w = el('imp-warn'); w.textContent = '⚠ Errore: ' + err.message; w.classList.add('on');
+    }
+  };
+  r.readAsText(f); ev.target.value = '';
+}
+function doReset(){
+  if(!confirm('⚠ Cancellare TUTTE le impostazioni?\nPassword provvisorie: admin / public')) return;
+  if(!confirm('Conferma definitiva: ripristinare?')) return;
+  [K.A, K.P, K.S, K.L, K.D].forEach(k => localStorage.removeItem(k));
+  sheetData = []; loadLogo();
+  alert('✔ Ripristino completato.'); goTo('login');
+}
+
+// ── LOGIN ──────────────────────────────────────────────────────
+el('l-psw').addEventListener('keydown', e => { if(e.key === 'Enter') doLogin(); });
+async function doLogin(){
+  const v = el('l-psw').value, err = el('l-err');
+  if(v !== admP() && v !== pubP()){
+    err.classList.add('on'); el('l-psw').focus(); return;
+  }
+  err.classList.remove('on'); el('l-psw').value = '';
+  if(!sheetData.length){
+    // gvizUrl() costruisce l'URL a partire dall'ID del foglio in localStorage (inserito dall'admin)
+    const u = gvizUrl();
+    if(!u){
+      alert("Foglio dati non configurato. Contattare l'amministratore.");
+      return;
+    }
+    setLoad(true); await loadSheet(); setLoad(false);
+  }
+  goTo('input');
+}
+
+// ── SHEET DATA ─────────────────────────────────────────────────
+async function loadSheet(){
+  // gvizUrl() usa esclusivamente l'URL del foglio salvato in localStorage dall'admin
+  // L'endpoint gviz/tq di Google Sheets non ha problemi CORS — funziona direttamente dal browser
+  const u = gvizUrl();
+  if(!u) return;
+  try{
+    const resp = await fetch(u);
+    if(!resp.ok) throw new Error('HTTP ' + resp.status);
+    const text = await resp.text();
+    const json = JSON.parse(text.substring(text.indexOf('(') + 1, text.lastIndexOf(')')));
+    sheetData = json.table.rows.map(row => {
+      const o = {};
+      'ABCDEFGHIJKLMNO'.split('').forEach((l, i) => {
+        o[l] = row.c && row.c[i] && row.c[i].v != null ? String(row.c[i].v).trim() : '';
+      });
+      return o;
+    }).filter(r => r.A || r.B || r.C || r.D);
+  } catch(e){
+    alert('Impossibile caricare i dati.\n\nErrore: ' + e.message + '\n\nVerificare che il foglio Google Sheets sia condiviso pubblicamente\n(Condividi → Chiunque con il link → Visualizzatore).');
+  }
+}
+
+// ── DROPDOWN ENGINE ────────────────────────────────────────────
+const DDS = {
+  s1:{ col:'A', inp:'i-s1', pan:'dp-s1', itm:'di-s1', src:'ds-s1', arr:'dv-s1', clr:'dc-s1' },
+  rp:{ col:'B', inp:'i-rp', pan:'dp-rp', itm:'di-rp', src:'ds-rp', arr:'dv-rp', clr:'dc-rp' },
+  s2:{ col:'C', inp:'i-s2', pan:'dp-s2', itm:'di-s2', src:'ds-s2', arr:'dv-s2', clr:'dc-s2' },
+  ct:{ col:'D', inp:'i-ct', pan:'dp-ct', itm:'di-ct', src:'ds-ct', arr:'dv-ct', clr:'dc-ct' }
+};
+let ddCur = null;
+
+function ddUniq(col, q){
+  const all = [...new Set(sheetData.map(r => r[col]).filter(v => v))].sort((a,b) => a.localeCompare(b,'it'));
+  return q ? all.filter(v => norm(v).includes(norm(q))) : all;
+}
+function ddRend(key, q){
+  const c = DDS[key], cur = el(c.inp).value.trim(), list = ddUniq(c.col, q);
+  if(!list.length){ el(c.itm).innerHTML = '<div class="ddempty">Nessuna voce trovata</div>'; return; }
+  const nq = q ? norm(q) : '';
+  el(c.itm).innerHTML = list.map(v => {
+    const isSel = norm(v) === norm(cur);
+    let lbl = esc(v);
+    if(nq){
+      const i = norm(v).indexOf(nq);
+      if(i >= 0) lbl = esc(v.slice(0,i)) + '<mark>' + esc(v.slice(i, i+q.length)) + '</mark>' + esc(v.slice(i+q.length));
+    }
+    return '<div class="ddi' + (isSel ? ' sel' : '') + '" onmousedown="event.preventDefault();ddPick(\'' + key + '\',\'' + v.replace(/\\/g,'\\\\').replace(/'/g,"\\'") + '\')">'
+         + '<div class="ddot"></div><span style="flex:1">' + lbl + '</span></div>';
+  }).join('');
+}
+function ddOpen(key){
+  if(ddCur && ddCur !== key) ddClose(ddCur);
+  ddCur = key;
+  const c = DDS[key], q = el(c.inp).value.trim();
+  el(c.pan).classList.add('on'); el(c.arr).classList.add('open');
+  el(c.src).value = q; ddRend(key, q);
+}
+function ddClose(key){
+  if(!key) return;
+  el(DDS[key].pan).classList.remove('on'); el(DDS[key].arr).classList.remove('open');
+  if(ddCur === key) ddCur = null;
+}
+function ddTog(key){
+  el(DDS[key].pan).classList.contains('on') ? ddClose(key) : (el(DDS[key].inp).focus(), ddOpen(key));
+}
+function ddInp(key){
+  const c = DDS[key], q = el(c.inp).value.trim();
+  el(c.clr).classList.toggle('on', q.length > 0);
+  el('er-'+key).classList.remove('on'); el(c.inp).classList.remove('err-i');
+  el(c.src).value = q; ddRend(key, q);
+  if(!el(c.pan).classList.contains('on')) ddOpen(key);
+}
+function ddSrch(key){ ddRend(key, el(DDS[key].src).value.trim()); }
+function ddPick(key, val){
+  const c = DDS[key]; el(c.inp).value = val; el(c.clr).classList.add('on');
+  el('er-'+key).classList.remove('on'); el(c.inp).classList.remove('err-i'); ddClose(key);
+}
+function ddClr(key){
+  const c = DDS[key]; el(c.inp).value = ''; el(c.clr).classList.remove('on');
+  el('er-'+key).classList.remove('on'); el(c.inp).classList.remove('err-i');
+  el(c.inp).focus(); ddOpen(key);
+}
+function ddKey(e, key){
+  const pan = el(DDS[key].pan), items = [...pan.querySelectorAll('.ddi')];
+  let hi = pan.querySelector('.ddi.hi'), idx = hi ? items.indexOf(hi) : -1;
+  if(e.key === 'ArrowDown'){
+    e.preventDefault(); if(!pan.classList.contains('on')) ddOpen(key);
+    items.forEach(i => i.classList.remove('hi')); idx = Math.min(idx+1, items.length-1);
+    if(items[idx]){ items[idx].classList.add('hi'); items[idx].scrollIntoView({block:'nearest'}); }
+  } else if(e.key === 'ArrowUp'){
+    e.preventDefault(); items.forEach(i => i.classList.remove('hi')); idx = Math.max(idx-1, 0);
+    if(items[idx]){ items[idx].classList.add('hi'); items[idx].scrollIntoView({block:'nearest'}); }
+  } else if(e.key === 'Enter'){
+    if(hi){ e.preventDefault(); hi.dispatchEvent(new MouseEvent('mousedown')); }
+    else if(pan.classList.contains('on')) ddClose(key);
+  } else if(e.key === 'Escape' || e.key === 'Tab') ddClose(key);
+}
+document.addEventListener('mousedown', e => {
+  if(!ddCur) return;
+  const w = el(DDS[ddCur].inp).closest('.ddw');
+  if(w && !w.contains(e.target)) ddClose(ddCur);
+});
+
+// ── SEARCH ─────────────────────────────────────────────────────
+let results = [], selRow = null, lastS1 = '';
+function resetSearch(){
+  Object.keys(DDS).forEach(k => {
+    const c = DDS[k]; el(c.inp).value = ''; el(c.clr).classList.remove('on');
+    el('er-'+k).classList.remove('on'); el(c.inp).classList.remove('err-i'); ddClose(k);
+  });
+  el('er-empty').classList.remove('on');
+}
+function doSearch(){
+  const s1 = el('i-s1').value.trim(), rp = el('i-rp').value.trim();
+  const s2 = el('i-s2').value.trim(), ct = el('i-ct').value.trim();
+  ['er-s1','er-rp','er-s2','er-ct'].forEach(id => el(id).classList.remove('on'));
+  ['i-s1','i-rp','i-s2','i-ct'].forEach(id => el(id).classList.remove('err-i'));
+  el('er-empty').classList.remove('on');
+  if(!s1 && !rp && !s2 && !ct){ el('er-empty').classList.add('on'); return; }
+  let f = sheetData, miss = false;
+  function flt(col, iid, eid, q){
+    if(!q) return;
+    const r = f.filter(x => norm(x[col]).includes(norm(q)));
+    if(!r.length){ el(eid).classList.add('on'); el(iid).classList.add('err-i'); miss = true; } else f = r;
+  }
+  flt('A','i-s1','er-s1',s1); flt('B','i-rp','er-rp',rp);
+  flt('C','i-s2','er-s2',s2); flt('D','i-ct','er-ct',ct);
+  if(miss) return;
+  results = f; lastS1 = s1; selRow = null;
+  renderRes(); goTo('results');
+}
+function renderRes(){
+  el('res-sub').textContent = results.length + ' risultat' + (results.length === 1 ? 'o trovato' : 'i trovati');
+  el('btn-det').disabled = true;
+  if(!results.length){ el('res-body').innerHTML = '<div class="nores"><p>Nessun risultato trovato</p></div>'; return; }
+  let h = '<div class="tw"><table><thead><tr>'
+        + '<th style="width:42px;text-align:center">✓</th>'
+        + '<th>Specializzazione</th><th>Città</th><th>Col.&nbsp;E</th><th>Col.&nbsp;F</th><th>Professionista</th>'
+        + '</tr></thead><tbody>';
+  results.forEach((r,i) => {
+    h += '<tr id="tr-'+i+'" onclick="pickRow('+i+')">'
+       + '<td><input type="checkbox" id="chk-'+i+'" onclick="event.stopPropagation()" onchange="pickRow('+i+')"/></td>'
+       + '<td>'+esc(r.C)+'</td><td>'+esc(r.D)+'</td><td>'+esc(r.E)+'</td><td>'+esc(r.F)+'</td>'
+       + '<td><b>'+esc(r.G)+'</b></td></tr>';
+  });
+  h += '</tbody></table></div>';
+  el('res-body').innerHTML = h;
+}
+function pickRow(i){
+  results.forEach((_,j) => { const tr=el('tr-'+j),ch=el('chk-'+j); if(tr)tr.classList.remove('sr'); if(ch)ch.checked=false; });
+  el('tr-'+i).classList.add('sr'); el('chk-'+i).checked = true;
+  selRow = i; el('btn-det').disabled = false;
+}
+
+// ── DETAIL ─────────────────────────────────────────────────────
+function goDetail(){
+  if(selRow === null) return;
+  const r = results[selRow];
+  el('d-lbl').textContent  = (lastS1 || 'Specializzazione').toUpperCase();
+  el('d-name').textContent = r.G || '—';
+  el('d-spec').textContent = r.C || '';
+  el('d-tbody').innerHTML  = [['H','Colonna H'],['I','Colonna I'],['J','Colonna J'],['K','Colonna K'],['L','Colonna L'],['M','Colonna M'],['N','Colonna N']]
+    .map(([c,l]) => '<tr><td>'+l+'</td><td>'+(esc(r[c])||'<span style="color:var(--g300)">—</span>')+'</td></tr>').join('');
+  goTo('detail');
+}
+
+// ── LINK TEST ENGINE ───────────────────────────────────────────
+function showTR(panId, type, title, detail, rows){
+  const p = el(panId);
+  const icon = type==='ok' ? '✓' : type==='err' ? '✕' : '⚠';
+  const rh = rows && rows.length
+    ? '<div class="tgrid">' + rows.map(([l,v]) => '<span class="tgl">'+l+'</span><span class="tgv">'+v+'</span>').join('') + '</div>'
+    : '';
+  p.className = 'tres on';
+  p.innerHTML = '<div class="tcard t'+type+'">'
+              + '<div class="th2"><div class="tico">'+icon+'</div>'+title+'</div>'
+              + (detail ? '<div class="tdet">'+detail+'</div>' : '')
+              + rh + '</div>';
+}
+
+// Testa il foglio usando SOLO l'URL inserito dall'admin nell'input
+async function testSheet(inputId, resId, openId){
+  const url = el(inputId).value.trim();
+  el(resId).className = 'tres'; el(openId).style.display = 'none';
+  if(!url){
+    showTR(resId, 'wrn', 'Nessun URL inserito', 'Inserisci il link del foglio Google Sheets prima di testare.');
+    return;
+  }
+  const id = shtId(url);
+  if(!id){
+    showTR(resId, 'err', 'URL non riconosciuto', "L'URL non contiene un ID foglio Google Sheets valido.",
+      [['Formato atteso','https://docs.google.com/spreadsheets/d/ID_FOGLIO/edit…'],
+       ['Nota','Deve essere un foglio Google Sheets nativo, non un file .xlsx su Drive']]);
+    return;
+  }
+  showTR(resId, 'wrn', 'Test in corso…', 'Connessione al foglio Google Sheets in corso…');
+  const testUrl = 'https://docs.google.com/spreadsheets/d/' + id + '/gviz/tq?tqx=out:json';
+  try{
+    const resp = await fetch(testUrl);
+    if(!resp.ok) throw new Error('HTTP ' + resp.status + ' — ' + resp.statusText);
+    const text = await resp.text();
+    const json = JSON.parse(text.substring(text.indexOf('(') + 1, text.lastIndexOf(')')));
+    const nr = json.table.rows.length, nc = json.table.cols.length;
+    const prev = json.table.rows[0]
+      ? json.table.rows[0].c.slice(0,3).map(c => c && c.v != null ? String(c.v) : '').filter(Boolean).join(' · ')
+      : '';
+    el(openId).href = url; el(openId).style.display = 'inline-flex';
+    showTR(resId, 'ok', 'Foglio raggiunto con successo!',
+      'Il foglio è accessibile. I dati verranno caricati ad ogni login.',
+      [['ID Foglio', id],
+       ['Righe dati', nr + ' righe trovate'],
+       ['Colonne', nc + ''],
+       ['Prima riga', prev || '(vuota)']]);
+  } catch(e){
+    el(openId).href = url; el(openId).style.display = 'inline-flex';
+    showTR(resId, 'err', 'Impossibile accedere al foglio',
+      'Verifica che il foglio sia impostato su <b>"Chiunque con il link → Visualizzatore"</b>.',
+      [['Errore', e.message],
+       ['Soluzione', 'Google Sheets → Condividi → Accesso generale → Chiunque con il link → Visualizzatore']]);
+  }
+}
+
+// Testa il logo usando SOLO l'URL inserito dall'admin nell'input
+async function testLogo(inputId, resId, openId, prevId){
+  const url = el(inputId).value.trim();
+  el(resId).className = 'tres'; el(openId).style.display = 'none'; el(prevId).style.display = 'none';
+  if(!url){
+    showTR(resId, 'wrn', 'Nessun URL inserito', 'Inserisci il link del logo prima di testare.');
+    return;
+  }
+  // Costruisce l'URL diretto dall'input admin: nessun URL hardcoded
+  const id  = fileId(url);
+  const src = id ? 'https://drive.google.com/uc?export=view&id=' + id : url;
+  showTR(resId, 'wrn', 'Test in corso…', 'Caricamento immagine logo in corso, attendere…');
+  await new Promise(resolve => {
+    const img = new Image();
+    img.onload = () => {
+      el(openId).href = url; el(openId).style.display = 'inline-flex';
+      el(prevId).querySelector('img').src = src;
+      el(prevId).style.display = 'block';
+      showTR(resId, 'ok', 'Logo caricato con successo!',
+        "L'immagine è raggiungibile e sarà mostrata nell'header dell'app.",
+        [['ID File', id || '(URL diretto)'], ['Dimensioni', img.naturalWidth + ' × ' + img.naturalHeight + ' px'], ['URL usato', src]]);
+      resolve();
+    };
+    img.onerror = () => {
+      el(openId).href = url; el(openId).style.display = 'inline-flex';
+      showTR(resId, 'err', 'Impossibile caricare il logo',
+        'Il file non è raggiungibile. Verifica la condivisione pubblica su Google Drive.',
+        [['URL tentato', src], ['Soluzione', 'Google Drive → clic destro → Condividi → Chiunque con il link → Visualizzatore']]);
+      resolve();
+    };
+    img.src = src;
+  });
+}
+</script>
+</body>
+</html>
