@@ -305,6 +305,12 @@ input[type=checkbox]{width:17px;height:17px;accent-color:var(--blue);cursor:poin
 
     <div class="obox" id="a-ok">✔ Impostazioni salvate con successo!</div>
     <div class="wbox" id="a-warn"></div>
+    <div id="a-goto" style="display:none;margin-top:10px;margin-bottom:4px">
+      <button class="btn bg" style="width:100%" onclick="backFromAdm()">
+        <svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><polyline points="15 18 9 12 15 6"/></svg>
+        Vai all'App
+      </button>
+    </div>
     <div class="divider"></div>
     <div class="brow">
       <button class="btn bp" onclick="doAdmSave()">
@@ -642,6 +648,7 @@ function openAdmPanel(){
   el('a-sh').value = shtU();
   ['e-aa2','e-ap2','e-ash'].forEach(id => el(id).classList.remove('on'));
   ['a-ok','a-warn','imp-ok','imp-warn'].forEach(id => el(id).classList.remove('on'));
+  el('a-goto').style.display = 'none';
   el('atr-sh').className = 'tres';
   el('aoa-sh').style.display = 'none';
   el('adm-status').innerHTML = `
@@ -668,7 +675,7 @@ function doAdmSave(){
   if(sh) ss(K.S, sh);
   sheetData = [];
   el('a-ok').classList.add('on');
-  setTimeout(openAdmPanel, 700);
+  el('a-goto').style.display = 'block';
 }
 
 function backFromAdm(){ goTo(cfgOk() ? 'input' : 'login'); }
