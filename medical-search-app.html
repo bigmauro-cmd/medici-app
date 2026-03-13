@@ -368,6 +368,10 @@ input[type=checkbox]{width:17px;height:17px;accent-color:var(--blue);cursor:poin
           <svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/><polyline points="10 17 15 12 10 7"/><line x1="15" y1="12" x2="3" y2="12"/></svg>
           Accedi
         </button>
+        <button class="btn bg" onclick="doQuit()">
+          <svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+          Esci
+        </button>
       </div>
     </div>
   </div>
@@ -583,6 +587,14 @@ function goTo(id){
   el('page-'+id).classList.add('active');
   window.scrollTo(0,0);
   if(id === 'input') resetSearch();
+}
+function doQuit(){
+  // Prova a chiudere la tab; se non riesce (tab non aperta da script) mostra messaggio
+  window.close();
+  // fallback: dopo 300ms se la finestra è ancora aperta, mostra avviso
+  setTimeout(() => {
+    alert('Per uscire chiudi questa scheda del browser.');
+  }, 300);
 }
 function setLoad(v){ el('loader').classList.toggle('on', v); }
 
@@ -925,6 +937,17 @@ function resetSearch(){
   el('er-empty').classList.remove('on');
 }
 function doSearch(){
+  // Se ci sono campi con errore attivo, svuotali e riprova con i campi validi rimasti
+  const hadErrors = ['er-s1','er-rp','er-s2','er-ct'].some(id => el(id).classList.contains('on'));
+  if(hadErrors){
+    [['er-s1','i-s1','dc-s1'],['er-rp','i-rp','dc-rp'],['er-s2','i-s2','dc-s2'],['er-ct','i-ct','dc-ct']]
+      .forEach(([eid,iid,cid]) => {
+        if(el(eid).classList.contains('on')){
+          el(iid).value = ''; el(iid).classList.remove('err-i');
+          el(eid).classList.remove('on'); el(cid).classList.remove('on');
+        }
+      });
+  }
   const s1 = el('i-s1').value.trim(), rp = el('i-rp').value.trim();
   const s2 = el('i-s2').value.trim(), ct = el('i-ct').value.trim();
   ['er-s1','er-rp','er-s2','er-ct'].forEach(id => el(id).classList.remove('on'));
