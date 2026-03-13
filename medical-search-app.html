@@ -836,7 +836,12 @@ const DDS = {
 let ddCur = null;
 
 function ddUniq(col, q){
-  const all = [...new Set(sheetData.map(r => r[col]).filter(v => v))].sort((a,b) => norm(a).localeCompare(norm(b),'it'));
+  // Per REP, SPEC2, CITTÀ: mostra solo voci compatibili con SPEC1 selezionato
+  const s1val = el('i-s1').value.trim();
+  const base = (col !== 'A' && s1val)
+    ? sheetData.filter(r => norm(r.A).includes(norm(s1val)))
+    : sheetData;
+  const all = [...new Set(base.map(r => r[col]).filter(v => v))].sort((a,b) => norm(a).localeCompare(norm(b),'it'));
   return q ? all.filter(v => norm(v).includes(norm(q))) : all;
 }
 function ddRend(key, q){
@@ -900,10 +905,33 @@ function ddSrch(key){ ddRend(key, el(DDS[key].src).value.trim()); }
 function ddPick(key, val){
   const c = DDS[key]; el(c.inp).value = val; el(c.clr).classList.add('on');
   el('er-'+key).classList.remove('on'); el(c.inp).classList.remove('err-i'); ddClose(key);
+  // Se si sceglie SPEC1, svuota i campi dipendenti che non sono più compatibili
+  if(key === 's1') resetDependents();
+}
+function resetDependents(){
+  // Svuota REP, SPEC2, CITTÀ se il loro valore non è più compatibile con SPEC1
+  ['rp','s2','ct'].forEach(k => {
+    const c = DDS[k], cur = el(c.inp).value.trim();
+    if(cur){
+      const s1val = el('i-s1').value.trim();
+      const valid = sheetData.filter(r => norm(r.A).includes(norm(s1val))).map(r => r[DDS[k].col]);
+      if(!valid.some(v => norm(v) === norm(cur))){
+        el(c.inp).value = ''; el(c.clr).classList.remove('on');
+        el('er-'+k).classList.remove('on'); el(c.inp).classList.remove('err-i');
+      }
+    }
+  });
 }
 function ddClr(key){
   const c = DDS[key]; el(c.inp).value = ''; el(c.clr).classList.remove('on');
   el('er-'+key).classList.remove('on'); el(c.inp).classList.remove('err-i');
+  // Se si cancella SPEC1, ripristina tutti i campi dipendenti
+  if(key === 's1'){
+    ['rp','s2','ct'].forEach(k => {
+      const c2 = DDS[k]; el(c2.inp).value = ''; el(c2.clr).classList.remove('on');
+      el('er-'+k).classList.remove('on'); el(c2.inp).classList.remove('err-i');
+    });
+  }
   el(c.inp).focus(); ddOpen(key);
 }
 function ddKey(e, key){
@@ -937,32 +965,39 @@ function resetSearch(){
   el('er-empty').classList.remove('on');
 }
 function doSearch(){
-  // Se ci sono campi con errore attivo, svuotali e riprova con i campi validi rimasti
-  const hadErrors = ['er-s1','er-rp','er-s2','er-ct'].some(id => el(id).classList.contains('on'));
-  if(hadErrors){
-    [['er-s1','i-s1','dc-s1'],['er-rp','i-rp','dc-rp'],['er-s2','i-s2','dc-s2'],['er-ct','i-ct','dc-ct']]
-      .forEach(([eid,iid,cid]) => {
-        if(el(eid).classList.contains('on')){
-          el(iid).value = ''; el(iid).classList.remove('err-i');
-          el(eid).classList.remove('on'); el(cid).classList.remove('on');
-        }
-      });
-  }
+  // Svuota sempre i campi che hanno già errore attivo (seconda pressione)
+  [['er-s1','i-s1','dc-s1'],['er-rp','i-rp','dc-rp'],['er-s2','i-s2','dc-s2'],['er-ct','i-ct','dc-ct']]
+    .forEach(([eid,iid,cid]) => {
+      if(el(eid).classList.contains('on')){
+        el(iid).value = ''; el(iid).classList.remove('err-i');
+        el(eid).classList.remove('on'); el(cid).classList.remove('on');
+      }
+    });
+
   const s1 = el('i-s1').value.trim(), rp = el('i-rp').value.trim();
   const s2 = el('i-s2').value.trim(), ct = el('i-ct').value.trim();
   ['er-s1','er-rp','er-s2','er-ct'].forEach(id => el(id).classList.remove('on'));
   ['i-s1','i-rp','i-s2','i-ct'].forEach(id => el(id).classList.remove('err-i'));
   el('er-empty').classList.remove('on');
+
   if(!s1 && !rp && !s2 && !ct){ el('er-empty').classList.add('on'); return; }
-  let f = sheetData, miss = false;
+
+  // Filtra progressivamente: salta i campi che non trovano nulla (li segna come errore)
+  // ma prosegue comunque con i campi che danno risultati
+  let f = sheetData;
   function flt(col, iid, eid, q){
     if(!q) return;
     const r = f.filter(x => norm(x[col]).includes(norm(q)));
-    if(!r.length){ el(eid).classList.add('on'); el(iid).classList.add('err-i'); miss = true; } else f = r;
+    if(!r.length){
+      el(eid).classList.add('on'); el(iid).classList.add('err-i');
+      // NON aggiorna f — quel filtro viene ignorato
+    } else {
+      f = r; // applica il filtro solo se trova risultati
+    }
   }
   flt('A','i-s1','er-s1',s1); flt('B','i-rp','er-rp',rp);
   flt('C','i-s2','er-s2',s2); flt('D','i-ct','er-ct',ct);
-  if(miss) return;
+
   results = f; lastS1 = s1; selRow = null;
   renderRes(); goTo('results');
 }
