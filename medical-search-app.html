@@ -835,104 +835,139 @@ const DDS = {
 };
 let ddCur = null;
 
-function ddUniq(col, q){
-  // Per REP, SPEC2, CITTÀ: mostra solo voci compatibili con SPEC1 selezionato
+// ── DROPDOWN ENGINE ─────────────────────────────────────────────
+
+// Ritorna le righe base: se col != A e SPEC1 è valorizzato, filtra per SPEC1
+function baseRows(col){
   const s1val = el('i-s1').value.trim();
-  const base = (col !== 'A' && s1val)
-    ? sheetData.filter(r => norm(r.A).includes(norm(s1val)))
-    : sheetData;
-  const all = [...new Set(base.map(r => r[col]).filter(v => v))].sort((a,b) => norm(a).localeCompare(norm(b),'it'));
+  if(col !== 'A' && s1val){
+    return sheetData.filter(r => norm(r.A).includes(norm(s1val)));
+  }
+  return sheetData;
+}
+
+// Voci uniche di una colonna, ordinate alfabeticamente, filtrate per query
+function ddUniq(col, q){
+  const rows = baseRows(col);
+  const all = [...new Set(rows.map(r => r[col]).filter(v => v))]
+    .sort((a,b) => norm(a).localeCompare(norm(b), 'it'));
   return q ? all.filter(v => norm(v).includes(norm(q))) : all;
 }
+
 function ddRend(key, q){
-  const c = DDS[key], cur = el(c.inp).value.trim(), list = ddUniq(c.col, q);
+  const c = DDS[key];
+  const cur = el(c.inp).value.trim();
+  const list = ddUniq(c.col, q);
   if(!list.length){
-    const msg = sheetData.length === 0
-      ? 'Dati foglio non caricati.<br>Verifica la configurazione admin.'
-      : 'Nessuna voce trovata';
-    el(c.itm).innerHTML = '<div class="ddempty">' + msg + '</div>';
+    el(c.itm).innerHTML = '<div class="ddempty">'
+      + (sheetData.length === 0 ? 'Dati non caricati — verifica configurazione admin.' : 'Nessuna voce trovata')
+      + '</div>';
     return;
   }
-  const nq = q ? norm(q) : '';
+  const nq = norm(q || '');
   el(c.itm).innerHTML = list.map(v => {
     const isSel = norm(v) === norm(cur);
     let lbl = esc(v);
     if(nq){
       const i = norm(v).indexOf(nq);
-      if(i >= 0) lbl = esc(v.slice(0,i)) + '<mark>' + esc(v.slice(i, i+q.length)) + '</mark>' + esc(v.slice(i+q.length));
+      if(i >= 0) lbl = esc(v.slice(0,i)) + '<mark>' + esc(v.slice(i, i+(q||'').length)) + '</mark>' + esc(v.slice(i+(q||'').length));
     }
-    return '<div class="ddi' + (isSel ? ' sel' : '') + '" onmousedown="event.preventDefault();ddPick(\'' + key + '\',\'' + v.replace(/\\/g,'\\\\').replace(/'/g,"\\'") + '\')">'
+    const safe = v.replace(/\\/g,'\\\\').replace(/'/g,"\\'");
+    return '<div class="ddi' + (isSel ? ' sel' : '') + '" onmousedown="event.preventDefault();ddPick(\'' + key + '\',\'' + safe + '\')">'
          + '<div class="ddot"></div><span style="flex:1">' + lbl + '</span></div>';
   }).join('');
 }
+
 async function ddOpen(key){
   if(ddCur && ddCur !== key) ddClose(ddCur);
   ddCur = key;
   const c = DDS[key];
-  // Se il campo ha un errore di "nessuna corrispondenza", svuotalo
+  // Se il campo è in stato errore (bordo rosso), svuotalo prima di aprire
   if(el('er-'+key).classList.contains('on')){
     el(c.inp).value = '';
     el(c.clr).classList.remove('on');
     el('er-'+key).classList.remove('on');
     el(c.inp).classList.remove('err-i');
   }
+  el(c.pan).classList.add('on');
+  el(c.arr).classList.add('open');
   const q = el(c.inp).value.trim();
-  el(c.pan).classList.add('on'); el(c.arr).classList.add('open');
   el(c.src).value = q;
-  // Se sheetData è vuoto, ricarica il foglio prima di mostrare il dropdown
   if(!sheetData.length){
     el(c.itm).innerHTML = '<div class="ddempty">Caricamento dati…</div>';
     await loadSheet();
   }
   ddRend(key, q);
 }
+
 function ddClose(key){
   if(!key) return;
-  el(DDS[key].pan).classList.remove('on'); el(DDS[key].arr).classList.remove('open');
+  el(DDS[key].pan).classList.remove('on');
+  el(DDS[key].arr).classList.remove('open');
   if(ddCur === key) ddCur = null;
 }
+
 async function ddTog(key){
-  el(DDS[key].pan).classList.contains('on') ? ddClose(key) : (el(DDS[key].inp).focus(), await ddOpen(key));
+  if(el(DDS[key].pan).classList.contains('on')){ ddClose(key); }
+  else { el(DDS[key].inp).focus(); await ddOpen(key); }
 }
+
 async function ddInp(key){
-  const c = DDS[key], q = el(c.inp).value.trim();
+  const c = DDS[key];
+  const q = el(c.inp).value.trim();
   el(c.clr).classList.toggle('on', q.length > 0);
-  el('er-'+key).classList.remove('on'); el(c.inp).classList.remove('err-i');
-  el(c.src).value = q; ddRend(key, q);
+  el('er-'+key).classList.remove('on');
+  el(c.inp).classList.remove('err-i');
+  el(c.src).value = q;
   if(!el(c.pan).classList.contains('on')) await ddOpen(key);
+  else ddRend(key, q);
 }
+
 function ddSrch(key){ ddRend(key, el(DDS[key].src).value.trim()); }
+
 function ddPick(key, val){
-  const c = DDS[key]; el(c.inp).value = val; el(c.clr).classList.add('on');
-  el('er-'+key).classList.remove('on'); el(c.inp).classList.remove('err-i'); ddClose(key);
-  // Se si sceglie SPEC1, svuota i campi dipendenti che non sono più compatibili
-  if(key === 's1') resetDependents();
-}
-function resetDependents(){
-  // Svuota REP, SPEC2, CITTÀ se il loro valore non è più compatibile con SPEC1
-  ['rp','s2','ct'].forEach(k => {
-    const c = DDS[k], cur = el(c.inp).value.trim();
-    if(cur){
-      const s1val = el('i-s1').value.trim();
-      const valid = sheetData.filter(r => norm(r.A).includes(norm(s1val))).map(r => r[DDS[k].col]);
-      if(!valid.some(v => norm(v) === norm(cur))){
-        el(c.inp).value = ''; el(c.clr).classList.remove('on');
-        el('er-'+k).classList.remove('on'); el(c.inp).classList.remove('err-i');
-      }
-    }
-  });
-}
-function ddClr(key){
-  const c = DDS[key]; el(c.inp).value = ''; el(c.clr).classList.remove('on');
-  el('er-'+key).classList.remove('on'); el(c.inp).classList.remove('err-i');
-  // Se si cancella SPEC1, ripristina tutti i campi dipendenti
+  const c = DDS[key];
+  el(c.inp).value = val;
+  el(c.clr).classList.add('on');
+  el('er-'+key).classList.remove('on');
+  el(c.inp).classList.remove('err-i');
+  ddClose(key);
+  // Quando si sceglie SPEC1, svuota i dipendenti non più compatibili
   if(key === 's1'){
     ['rp','s2','ct'].forEach(k => {
-      const c2 = DDS[k]; el(c2.inp).value = ''; el(c2.clr).classList.remove('on');
-      el('er-'+k).classList.remove('on'); el(c2.inp).classList.remove('err-i');
+      const ck = DDS[k], cur = el(ck.inp).value.trim();
+      if(!cur) return;
+      const compatibili = sheetData
+        .filter(r => norm(r.A).includes(norm(val)))
+        .map(r => r[ck.col]);
+      if(!compatibili.some(v => norm(v) === norm(cur))){
+        el(ck.inp).value = '';
+        el(ck.clr).classList.remove('on');
+        el('er-'+k).classList.remove('on');
+        el(ck.inp).classList.remove('err-i');
+      }
     });
   }
-  el(c.inp).focus(); ddOpen(key);
+}
+
+function ddClr(key){
+  const c = DDS[key];
+  el(c.inp).value = '';
+  el(c.clr).classList.remove('on');
+  el('er-'+key).classList.remove('on');
+  el(c.inp).classList.remove('err-i');
+  // Svuotare SPEC1 → svuota anche i 3 dipendenti
+  if(key === 's1'){
+    ['rp','s2','ct'].forEach(k => {
+      const ck = DDS[k];
+      el(ck.inp).value = '';
+      el(ck.clr).classList.remove('on');
+      el('er-'+k).classList.remove('on');
+      el(ck.inp).classList.remove('err-i');
+    });
+  }
+  el(c.inp).focus();
+  ddOpen(key);
 }
 function ddKey(e, key){
   const pan = el(DDS[key].pan), items = [...pan.querySelectorAll('.ddi')];
@@ -965,41 +1000,54 @@ function resetSearch(){
   el('er-empty').classList.remove('on');
 }
 function doSearch(){
-  // Svuota sempre i campi che hanno già errore attivo (seconda pressione)
+  // Step 1: svuota campi che erano già in errore dalla ricerca precedente
   [['er-s1','i-s1','dc-s1'],['er-rp','i-rp','dc-rp'],['er-s2','i-s2','dc-s2'],['er-ct','i-ct','dc-ct']]
     .forEach(([eid,iid,cid]) => {
       if(el(eid).classList.contains('on')){
-        el(iid).value = ''; el(iid).classList.remove('err-i');
-        el(eid).classList.remove('on'); el(cid).classList.remove('on');
+        el(iid).value = '';
+        el(iid).classList.remove('err-i');
+        el(eid).classList.remove('on');
+        el(cid).classList.remove('on');
       }
     });
 
-  const s1 = el('i-s1').value.trim(), rp = el('i-rp').value.trim();
-  const s2 = el('i-s2').value.trim(), ct = el('i-ct').value.trim();
+  // Step 2: leggi valori aggiornati
+  const s1 = el('i-s1').value.trim();
+  const rp = el('i-rp').value.trim();
+  const s2 = el('i-s2').value.trim();
+  const ct = el('i-ct').value.trim();
+
+  // Pulisci stati errore
   ['er-s1','er-rp','er-s2','er-ct'].forEach(id => el(id).classList.remove('on'));
   ['i-s1','i-rp','i-s2','i-ct'].forEach(id => el(id).classList.remove('err-i'));
   el('er-empty').classList.remove('on');
 
   if(!s1 && !rp && !s2 && !ct){ el('er-empty').classList.add('on'); return; }
 
-  // Filtra progressivamente: salta i campi che non trovano nulla (li segna come errore)
-  // ma prosegue comunque con i campi che danno risultati
+  // Step 3: filtra — se un campo non ha match lo segnala ma NON blocca la ricerca
   let f = sheetData;
   function flt(col, iid, eid, q){
     if(!q) return;
     const r = f.filter(x => norm(x[col]).includes(norm(q)));
     if(!r.length){
-      el(eid).classList.add('on'); el(iid).classList.add('err-i');
-      // NON aggiorna f — quel filtro viene ignorato
+      el(eid).classList.add('on');
+      el(iid).classList.add('err-i');
+      // il filtro viene ignorato, f rimane invariata
     } else {
-      f = r; // applica il filtro solo se trova risultati
+      f = r;
     }
   }
-  flt('A','i-s1','er-s1',s1); flt('B','i-rp','er-rp',rp);
-  flt('C','i-s2','er-s2',s2); flt('D','i-ct','er-ct',ct);
+  flt('A','i-s1','er-s1',s1);
+  flt('B','i-rp','er-rp',rp);
+  flt('C','i-s2','er-s2',s2);
+  flt('D','i-ct','er-ct',ct);
 
-  results = f; lastS1 = s1; selRow = null;
-  renderRes(); goTo('results');
+  // Step 4: mostra sempre i risultati, anche se alcuni campi hanno errore
+  results = f;
+  lastS1 = s1;
+  selRow = null;
+  renderRes();
+  goTo('results');
 }
 function renderRes(){
   el('res-sub').textContent = results.length + ' risultat' + (results.length === 1 ? 'o trovato' : 'i trovati');
