@@ -390,7 +390,7 @@ input[type=checkbox]{width:17px;height:17px;accent-color:var(--blue);cursor:poin
           Esci
         </button>
       </div>
-      <div id="bio-wrap" style="display:none;margin-top:14px;border-top:1px solid var(--g100);padding-top:14px">
+      <div id="bio-wrap" style="margin-top:14px;border-top:1px solid var(--g100);padding-top:14px">
         <button class="btn" id="btn-bio" onclick="doBiometric()"
           style="width:100%;background:linear-gradient(135deg,#4f46e5,#7c3aed);color:#fff;justify-content:center;gap:10px">
           <span id="bio-icon">👆</span>
@@ -1300,15 +1300,12 @@ async function bioLoginSuccess(){
   goTo('input');
 }
 
-// Inizializzazione biometria all'avvio
+// Inizializzazione biometria all'avvio — aggiorna icona e testo
 (async()=>{
   const webOk=await bioSupported().catch(()=>false);
   const isHttps=location.protocol==='https:'||location.hostname==='localhost';
   const hasW=!!localStorage.getItem(BIO_KEY+'_w');
   const hasP=!!localStorage.getItem(BIO_KEY+'_p');
-  const wrap=el('bio-wrap');
-  if(!wrap) return;
-  wrap.style.display='';
   if(webOk && isHttps){
     el('bio-icon').textContent=/iphone|ipad|mac/i.test(navigator.userAgent)?'🍎':'👆';
     el('bio-label').textContent=hasW?'Accedi con Biometria':'Registra Biometria';
