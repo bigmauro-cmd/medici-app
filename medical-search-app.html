@@ -1192,12 +1192,19 @@ async function testSheet(inputId, resId, openId){
 }
 
 // ── BIOMETRIA ──────────────────────────────────────────────────
+// Logica:
+// - Primo accesso su dispositivo nuovo → obbliga impostazione PIN/impronta
+// - Accessi successivi → verifica PIN/impronta e fa entrare come utente normale
+// - Le password che contano sono quelle in localStorage (admin/public di default)
+// - Il tasto Amministratore usa SOLO la password admin (mai biometria)
+
 const BIO_KEY = 'csp_bio';
 
 async function bioSupported(){
   try{ return !!(window.PublicKeyCredential && await PublicKeyCredential.isUserVerifyingPlatformAuthenticatorAvailable()); }
   catch(e){ return false; }
 }
+
 async function sha256(str){
   const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(str));
   return [...new Uint8Array(buf)].map(b=>b.toString(16).padStart(2,'0')).join('');
@@ -1205,18 +1212,19 @@ async function sha256(str){
 function b64enc(buf){ return btoa(String.fromCharCode(...new Uint8Array(buf))); }
 function b64dec(b64){ const bin=atob(b64);const b=new Uint8Array(bin.length);bin.split('').forEach((c,i)=>b[i]=c.charCodeAt(0));return b.buffer; }
 
-function showPIN(title, cb){
+// Modale PIN con conferma doppia (solo per impostazione)
+function showPIN(title, subtitle, cb){
   const old=document.getElementById('pin-overlay'); if(old) old.remove();
   const o=document.createElement('div');
   o.id='pin-overlay';
-  o.style.cssText='position:fixed;inset:0;background:rgba(10,22,40,.6);z-index:9999;display:flex;align-items:center;justify-content:center;padding:16px';
+  o.style.cssText='position:fixed;inset:0;background:rgba(10,22,40,.65);z-index:9999;display:flex;align-items:center;justify-content:center;padding:16px';
   o.innerHTML=`<div style="background:#fff;border-radius:14px;padding:28px 24px;max-width:320px;width:100%;box-shadow:0 20px 60px rgba(10,22,40,.3)">
-    <div style="font-size:1.1rem;font-weight:700;color:#0a1628;margin-bottom:4px">${title}</div>
-    <div style="font-size:.8rem;color:#64748b;margin-bottom:16px">Solo cifre — minimo 4 caratteri</div>
+    <div style="font-size:1.05rem;font-weight:700;color:#0a1628;margin-bottom:3px">${title}</div>
+    <div style="font-size:.8rem;color:#64748b;margin-bottom:16px">${subtitle}</div>
     <input id="pin-inp" type="password" inputmode="numeric" maxlength="8" placeholder="••••"
       style="width:100%;padding:12px;border:2px solid #e2e8f0;border-radius:9px;font-size:1.4rem;letter-spacing:6px;text-align:center;outline:none;font-family:'Outfit',sans-serif"
       onkeydown="if(event.key==='Enter')document.getElementById('pin-ok').click()"/>
-    <div id="pin-err" style="color:#ef4444;font-size:.78rem;margin-top:6px;min-height:16px"></div>
+    <div id="pin-err" style="color:#ef4444;font-size:.78rem;margin-top:6px;min-height:16px;text-align:center"></div>
     <div style="display:flex;gap:10px;margin-top:14px">
       <button id="pin-ok" style="flex:1;padding:11px;background:#0a1628;color:#fff;border:none;border-radius:8px;font-size:.9rem;font-weight:700;cursor:pointer;font-family:'Outfit',sans-serif">Conferma</button>
       <button onclick="document.getElementById('pin-overlay').remove()" style="flex:1;padding:11px;background:#f1f5f9;color:#334155;border:none;border-radius:8px;font-size:.9rem;font-weight:700;cursor:pointer;font-family:'Outfit',sans-serif">Annulla</button>
@@ -1232,16 +1240,35 @@ function showPIN(title, cb){
   };
 }
 
+// Impostazione PIN con doppia conferma
+function setupPIN(onDone){
+  showPIN('🔢 Imposta PIN di accesso rapido','Scegli un PIN numerico di almeno 4 cifre', pin1=>{
+    showPIN('🔢 Conferma PIN','Reinserisci il PIN per confermare', async pin2=>{
+      if(pin1 !== pin2){
+        el('bio-status').textContent='❌ I PIN non corrispondono. Riprova.';
+        return;
+      }
+      const h=await sha256(pin1+'csp2024_salt');
+      localStorage.setItem(BIO_KEY+'_p',h);
+      el('bio-status').textContent='✅ PIN impostato con successo!';
+      el('bio-icon').textContent='🔢';
+      el('bio-label').textContent='Accedi con PIN';
+      if(onDone) onDone();
+    });
+  });
+}
+
 async function doBiometric(){
   const st=el('bio-status');
   const webOk=await bioSupported();
   const isHttps=location.protocol==='https:'||location.hostname==='localhost';
 
   if(webOk && isHttps){
-    // ── WebAuthn (impronta / Face ID reale)
+    // ── WebAuthn nativo (impronta / Face ID) — su HTTPS
     const stored=localStorage.getItem(BIO_KEY+'_w');
     if(!stored){
-      st.textContent='⏳ Registrazione biometria…';
+      // Primo accesso: registra impronta
+      st.textContent='⏳ Registrazione impronta/Face ID in corso…';
       try{
         const c=await navigator.credentials.create({publicKey:{
           challenge:crypto.getRandomValues(new Uint8Array(32)),
@@ -1252,11 +1279,15 @@ async function doBiometric(){
           timeout:60000
         }});
         localStorage.setItem(BIO_KEY+'_w',JSON.stringify({id:b64enc(c.rawId)}));
-        st.textContent='✅ Biometria registrata! Ripremi per accedere.';
+        st.textContent='✅ Biometria registrata! Ripremi il pulsante per accedere.';
         el('bio-label').textContent='Accedi con Biometria';
-      }catch(e){ st.textContent='❌ '+e.message; }
+        el('bio-icon').textContent=/iphone|ipad|mac/i.test(navigator.userAgent)?'🍎':'👆';
+      }catch(e){
+        st.textContent='❌ Registrazione annullata: '+e.message;
+      }
       return;
     }
+    // Accessi successivi: verifica impronta
     st.textContent='⏳ Verifica in corso…';
     try{
       const s=JSON.parse(stored);
@@ -1265,42 +1296,43 @@ async function doBiometric(){
         allowCredentials:[{type:'public-key',id:b64dec(s.id)}],
         userVerification:'required',timeout:60000
       }});
-      if(a){ st.textContent=''; bioLoginSuccess(); }
-    }catch(e){ st.textContent='❌ '+e.message; }
+      if(a){ st.textContent=''; await bioLoginSuccess(); }
+    }catch(e){ st.textContent='❌ Verifica fallita: '+e.message; }
 
   } else {
-    // ── PIN locale (fallback per file:// o HTTP)
+    // ── PIN numerico — fallback per file locale o HTTP
     const stored=localStorage.getItem(BIO_KEY+'_p');
     if(!stored){
-      showPIN('🔢 Imposta PIN di accesso rapido', async(pin)=>{
-        const h=await sha256(pin+'csp2024_salt');
-        localStorage.setItem(BIO_KEY+'_p',h);
-        el('bio-status').textContent='✅ PIN impostato! Ripremi per accedere.';
-        el('bio-label').textContent='Accedi con PIN';
-        el('bio-icon').textContent='🔢';
-      });
-    } else {
-      showPIN('🔢 Inserisci il tuo PIN', async(pin)=>{
-        const h=await sha256(pin+'csp2024_salt');
-        if(h===stored){ el('bio-status').textContent=''; bioLoginSuccess(); }
-        else { el('bio-status').textContent='❌ PIN errato.'; }
-      });
+      // Primo accesso su questo dispositivo: imposta PIN
+      st.textContent='';
+      setupPIN(null); // non fa login automatico dopo setup: utente ripremi il tasto
+      return;
     }
+    // PIN già impostato: verifica
+    showPIN('🔢 Inserisci il tuo PIN','PIN di accesso rapido', async pin=>{
+      const h=await sha256(pin+'csp2024_salt');
+      if(h===stored){
+        st.textContent='';
+        await bioLoginSuccess();
+      } else {
+        st.textContent='❌ PIN errato. Riprova.';
+      }
+    });
   }
 }
 
 async function bioLoginSuccess(){
-  // Replica esattamente il flusso di doLogin (accesso come utente normale)
+  // Accesso biometrico = utente normale (equivalente a password pubblica)
   if(!sheetData.length){
-    const u = gvizUrl();
-    if(!u){ el('bio-status').textContent='❌ Foglio dati non configurato. Contattare l\'amministratore.'; return; }
+    const u=gvizUrl();
+    if(!u){ el('bio-status').textContent="❌ Foglio dati non configurato. Contattare l'amministratore."; return; }
     setLoad(true); await loadSheet(); setLoad(false);
   }
   el('bio-status').textContent='';
   goTo('input');
 }
 
-// Inizializzazione biometria all'avvio — aggiorna icona e testo
+// Inizializzazione all'avvio: aggiorna icona e testo del pulsante
 (async()=>{
   const webOk=await bioSupported().catch(()=>false);
   const isHttps=location.protocol==='https:'||location.hostname==='localhost';
@@ -1308,10 +1340,10 @@ async function bioLoginSuccess(){
   const hasP=!!localStorage.getItem(BIO_KEY+'_p');
   if(webOk && isHttps){
     el('bio-icon').textContent=/iphone|ipad|mac/i.test(navigator.userAgent)?'🍎':'👆';
-    el('bio-label').textContent=hasW?'Accedi con Biometria':'Registra Biometria';
+    el('bio-label').textContent=hasW?'Accedi con Biometria':'Imposta Biometria (1° accesso)';
   } else {
     el('bio-icon').textContent='🔢';
-    el('bio-label').textContent=hasP?'Accedi con PIN':'Imposta PIN rapido';
+    el('bio-label').textContent=hasP?'Accedi con PIN':'Imposta PIN (1° accesso)';
   }
 })();
 </script>
