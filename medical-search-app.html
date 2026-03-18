@@ -508,18 +508,10 @@ input[type=checkbox]{width:17px;height:17px;accent-color:var(--blue);cursor:poin
 <!-- PAGE: RISULTATI -->
 <div class="page" id="page-results">
   <div class="card">
-    <div style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:8px;margin-bottom:4px">
-      <div>
-        <div class="ptitle">Risultati della Ricerca</div>
-        <div class="psub" id="res-sub"></div>
-      </div>
-      <button class="btn bg" id="btn-vista" onclick="toggleVista()" style="font-size:.75rem;padding:7px 14px;white-space:nowrap;flex-shrink:0">
-        <svg id="icon-vista" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="18"/><rect x="14" y="3" width="7" height="8"/><rect x="14" y="15" width="7" height="6"/></svg>
-        Vista Verticale
-      </button>
-    </div>
-    <div id="res-body"></div>
-    <div id="res-body-vert" style="display:none"></div>
+    <div class="ptitle">Risultati della Ricerca</div>
+    <div class="psub" id="res-sub"></div>
+    <div id="res-body" style="display:none"></div>
+    <div id="res-body-vert"></div>
     <div class="divider"></div>
     <div class="brow">
       <button class="btn bb" id="btn-det" onclick="goDetail()" disabled>
@@ -1080,21 +1072,13 @@ function doSearch(){
   renderRes();
   goTo('results');
 }
-let vistaVert = false;
-function toggleVista(){
-  vistaVert = !vistaVert;
-  el('res-body').style.display      = vistaVert ? 'none' : '';
-  el('res-body-vert').style.display = vistaVert ? '' : 'none';
-  el('btn-vista').innerHTML = vistaVert
-    ? '<svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="5"/><rect x="3" y="12" width="18" height="4"/><rect x="3" y="20" width="18" height="1"/></svg> Vista Standard'
-    : '<svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="18"/><rect x="14" y="3" width="7" height="8"/><rect x="14" y="15" width="7" height="6"/></svg> Vista Verticale';
-}
+let vistaVert = true;
 function renderRes(){
   el('res-sub').textContent = results.length + ' risultat' + (results.length === 1 ? 'o trovato' : 'i trovati');
   el('btn-det').disabled = true;
   if(!results.length){
-    el('res-body').innerHTML = '<div class="nores"><p>Nessun risultato trovato</p></div>';
-    el('res-body-vert').innerHTML = '';
+    el('res-body').innerHTML = '';
+    el('res-body-vert').innerHTML = '<div class="nores"><p>Nessun risultato trovato</p></div>';
     return;
   }
   // ── Vista standard (tabella orizzontale)
