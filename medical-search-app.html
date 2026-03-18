@@ -3,7 +3,10 @@
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no"/>
-<title>Ricerca Professionisti Sanitari</title>
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate"/>
+<meta http-equiv="Pragma" content="no-cache"/>
+<meta http-equiv="Expires" content="0"/>
+<title>Ricerca Professionisti Sanitari v3</title>
 <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700&family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet"/>
 <style>
 :root{
@@ -510,7 +513,6 @@ input[type=checkbox]{width:17px;height:17px;accent-color:var(--blue);cursor:poin
   <div class="card">
     <div class="ptitle">Risultati della Ricerca</div>
     <div class="psub" id="res-sub"></div>
-    <div id="res-body" style="display:none"></div>
     <div id="res-body-vert"></div>
     <div class="divider"></div>
     <div class="brow">
@@ -1077,30 +1079,15 @@ function renderRes(){
   el('res-sub').textContent = results.length + ' risultat' + (results.length === 1 ? 'o trovato' : 'i trovati');
   el('btn-det').disabled = true;
   if(!results.length){
-    el('res-body').innerHTML = '';
     el('res-body-vert').innerHTML = '<div class="nores"><p>Nessun risultato trovato</p></div>';
     return;
   }
-  // ── Vista standard (tabella orizzontale)
-  let h = '<div class="tw"><table><thead><tr>'
-        + '<th style="width:42px;text-align:center">✓</th>'
-        + '<th>Specializzazione</th><th>Città</th><th>Col.&nbsp;E</th><th>Col.&nbsp;F</th><th>Professionista</th>'
-        + '</tr></thead><tbody>';
-  results.forEach((r,i) => {
-    h += '<tr id="tr-'+i+'" onclick="pickRow('+i+')">'
-       + '<td><input type="checkbox" id="chk-'+i+'" onclick="event.stopPropagation()" onchange="pickRow('+i+')"/></td>'
-       + '<td>'+esc(r.C)+'</td><td>'+esc(r.D)+'</td><td>'+esc(r.E)+'</td><td>'+esc(r.F)+'</td>'
-       + '<td><b>'+esc(r.G)+'</b></td></tr>';
-  });
-  h += '</tbody></table></div>';
-  el('res-body').innerHTML = h;
-  // ── Vista verticale (card per riga)
   const cols = [['A','Spec. Principale'],['B','Reparto'],['C','Specializzazione'],['D','Città'],['E','Struttura'],['F','Ubicazione'],['G','Professionista']];
   let hv = '';
   results.forEach((r,i) => {
     hv += '<div class="vcard" id="vc-'+i+'" onclick="pickRowV('+i+')">';
     cols.forEach(([k,lbl]) => {
-      hv += '<div class="vrow"><div class="vlbl">'+lbl+'</div><div class="vval">'+esc(r[k])+'</div></div>';
+      hv += '<div class="vrow"><div class="vlbl">'+lbl+'</div><div class="vval">'+(esc(r[k])||'—')+'</div></div>';
     });
     hv += '</div>';
   });
