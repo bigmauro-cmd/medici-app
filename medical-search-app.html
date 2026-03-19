@@ -1127,9 +1127,9 @@ function pickRowV(i){
 }
 
 // ── DETAIL ─────────────────────────────────────────────────────
-function goDetail(){\n  if(selRow === null) return;\n  const r = results[selRow];
-  el('d-lbl').textContent  = (lastS1 || 'Specializzazione').toUpperCase();
-  el('d-name').textContent = r.G || '—';
+function goDetail(){
+  if(selRow === null) return;
+  const r = results[selRow];
   el('d-spec').textContent = r.C || '';
   el('d-tbody').innerHTML  = [
     ['A','Specializzazione Principale'],
