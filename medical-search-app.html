@@ -163,6 +163,8 @@ tbody tr.sr{background:#dbeafe}
 tbody td{padding:11px 13px;color:var(--g500);vertical-align:middle;font-weight:700}
 tbody td:first-child{text-align:center;width:42px}
 input[type=checkbox]{width:17px;height:17px;accent-color:var(--blue);cursor:pointer}
+/* Colonna Spec. Principale larga e centrata */
+.col-sp1{min-width:180px;text-align:center !important;white-space:nowrap}
 
 /* DETAIL */
 .phdr{border-radius:var(--r);padding:26px 30px;margin-bottom:20px;background:linear-gradient(135deg,var(--navy) 0%,#1e3a5f 50%,var(--blue) 100%);color:#fff;position:relative;overflow:hidden}
@@ -366,6 +368,9 @@ input[type=checkbox]{width:17px;height:17px;accent-color:var(--blue);cursor:poin
       <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/></svg>
       Ripristina impostazioni di fabbrica
     </button>
+    <div class="divider"></div>
+    <div class="sec-lbl" style="color:var(--blue)">🔄 Aggiornamento Dati</div>
+    <div style="display:flex;align-items:center;gap:10px"><span id="reload-status" style="font-size:.8rem;color:var(--g500);flex:1"></span><button onclick="forceReload()" style="font-size:.8rem;padding:6px 14px;border:1.5px solid var(--g300);border-radius:6px;background:transparent;color:var(--g500);cursor:pointer;font-family:'Outfit',sans-serif">↺ Ricarica dati</button></div>
   </div>
 </div>
 
@@ -407,7 +412,6 @@ input[type=checkbox]{width:17px;height:17px;accent-color:var(--blue);cursor:poin
   <div class="card">
     <div class="ptitle">Ricerca Professionista</div>
     <div class="psub">Digita oppure scegli dal menù a tendina — uno o più campi</div>
-    <div id="reload-bar" style="margin-bottom:12px;display:flex;align-items:center;gap:10px"><span id="reload-status" style="font-size:12px;color:var(--muted);flex:1"></span><button onclick="forceReload()" style="font-size:12px;padding:4px 10px;border:1px solid var(--border);border-radius:6px;background:transparent;color:var(--muted);cursor:pointer">u21ba Ricarica dati</button></div>
 
     <div class="fg">
       <label>Specializzazione Principale <span style="color:var(--ac)">[SPEC1]</span></label>
@@ -511,8 +515,17 @@ input[type=checkbox]{width:17px;height:17px;accent-color:var(--blue);cursor:poin
 <!-- PAGE: RISULTATI -->
 <div class="page" id="page-results">
   <div class="card">
-    <div class="ptitle">Risultati della Ricerca</div>
-    <div class="psub" id="res-sub"></div>
+    <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;margin-bottom:6px">
+      <div>
+        <div class="ptitle">Risultati della Ricerca</div>
+        <div class="psub" id="res-sub"></div>
+      </div>
+      <button class="btn bg" id="btn-vista" onclick="toggleVista()" style="font-size:.75rem;padding:7px 14px;white-space:nowrap;flex-shrink:0">
+        <svg id="icon-vista" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="18"/><rect x="14" y="3" width="7" height="8"/><rect x="14" y="15" width="7" height="6"/></svg>
+        <span id="lbl-vista">Vista Verticale</span>
+      </button>
+    </div>
+    <div id="res-body"></div>
     <div id="res-body-vert"></div>
     <div class="divider"></div>
     <div class="brow">
@@ -1089,42 +1102,86 @@ function doSearch(){
   renderRes();
   goTo('results');
 }
-let vistaVert = true;
+// ── VISTA: auto-detect desktop(standard) / mobile(verticale) ──
+function isMobile(){ return window.matchMedia('(max-width:768px),(orientation:portrait)').matches; }
+let vistaVert = isMobile();
+
+function applyVista(){
+  const rb  = document.getElementById('res-body');
+  const rbv = document.getElementById('res-body-vert');
+  const btn = document.getElementById('btn-vista');
+  if(rb)  rb.style.display  = vistaVert ? 'none' : '';
+  if(rbv) rbv.style.display = vistaVert ? '' : 'none';
+  if(!btn) return;
+  const icon = document.getElementById('icon-vista');
+  const lbl  = document.getElementById('lbl-vista');
+  if(vistaVert){
+    if(icon) icon.innerHTML='<rect x="3" y="3" width="18" height="5"/><rect x="3" y="12" width="18" height="4"/><rect x="3" y="20" width="18" height="1"/>';
+    if(lbl)  lbl.textContent='Vista Standard';
+  } else {
+    if(icon) icon.innerHTML='<rect x="3" y="3" width="7" height="18"/><rect x="14" y="3" width="7" height="8"/><rect x="14" y="15" width="7" height="6"/>';
+    if(lbl)  lbl.textContent='Vista Verticale';
+  }
+}
+
+function toggleVista(){
+  vistaVert = !vistaVert;
+  applyVista();
+}
+
 function renderRes(){
   el('res-sub').textContent = results.length + ' risultat' + (results.length === 1 ? 'o trovato' : 'i trovati');
   el('btn-det').disabled = true;
+  selRow = null;
+
   if(!results.length){
+    el('res-body').innerHTML = '<div class="nores"><p>Nessun risultato trovato</p></div>';
     el('res-body-vert').innerHTML = '<div class="nores"><p>Nessun risultato trovato</p></div>';
+    applyVista();
     return;
   }
-  const cols = [['A','Spec. Principale'],['B','Reparto'],['C','Specializzazione'],['D','Città'],['E','Struttura'],['F','Ubicazione'],['G','Professionista']];
+
+  // Tabella standard (desktop) - no Ubicazione, sp1 centrata, click=goDetail
+  let h = '<div class="tw"><table><thead><tr>'
+        + '<th class="col-sp1">Spec. Principale</th>'
+        + '<th>Reparto</th><th>Specializzazione</th><th>Citta</th><th>Struttura</th><th>Professionista</th>'
+        + '</tr></thead><tbody>';
+  results.forEach((r,i) => {
+    h += '<tr id="tr-'+i+'" onclick="selectAndDetail('+i+')">'
+       + '<td class="col-sp1">'+esc(r.A)+'</td>'
+       + '<td>'+esc(r.B)+'</td><td>'+esc(r.C)+'</td><td>'+esc(r.D)+'</td><td>'+esc(r.E)+'</td>'
+       + '<td><b>'+esc(r.G)+'</b></td></tr>';
+  });
+  h += '</tbody></table></div>';
+  el('res-body').innerHTML = h;
+
+  // Vista verticale (mobile) - no Ubicazione, tap=goDetail
+  const cols = [['A','Spec. Principale'],['B','Reparto'],['C','Specializzazione'],['D','Citta'],['E','Struttura'],['G','Professionista']];
   let hv = '';
   results.forEach((r,i) => {
-    hv += '<div class="vcard" id="vc-'+i+'" onclick="pickRowV('+i+')">';
+    hv += '<div class="vcard" id="vc-'+i+'" onclick="selectAndDetail('+i+')">';
     cols.forEach(([k,lbl]) => {
-      hv += '<div class="vrow"><div class="vlbl">'+lbl+'</div><div class="vval">'+(esc(r[k])||'—')+'</div></div>';
+      hv += '<div class="vrow"><div class="vlbl">'+lbl+'</div><div class="vval">'+(esc(r[k])||'&mdash;')+'</div></div>';
     });
     hv += '</div>';
   });
   el('res-body-vert').innerHTML = hv;
+  applyVista();
 }
-function pickRow(i){
-  results.forEach((_,j) => { const tr=el('tr-'+j),ch=el('chk-'+j); if(tr)tr.classList.remove('sr'); if(ch)ch.checked=false; });
-  el('tr-'+i).classList.add('sr'); el('chk-'+i).checked = true;
-  selRow = i; el('btn-det').disabled = false;
-  // sincronizza vista verticale
-  results.forEach((_,j) => { const vc=el('vc-'+j); if(vc)vc.classList.remove('sr'); });
-  const vci = el('vc-'+i); if(vci) vci.classList.add('sr');
+
+// Click/tap su riga = seleziona e apre subito il dettaglio
+function selectAndDetail(i){
+  results.forEach((_,j)=>{ const tr=el('tr-'+j); if(tr) tr.classList.remove('sr'); });
+  const tri=el('tr-'+i); if(tri) tri.classList.add('sr');
+  results.forEach((_,j)=>{ const vc=el('vc-'+j); if(vc) vc.classList.remove('sr'); });
+  const vci=el('vc-'+i); if(vci) vci.classList.add('sr');
+  selRow = i;
+  el('btn-det').disabled = false;
+  goDetail();
 }
-function pickRowV(i){
-  results.forEach((_,j) => { const vc=el('vc-'+j); if(vc)vc.classList.remove('sr'); });
-  el('vc-'+i).classList.add('sr');
-  // sincronizza tabella standard
-  results.forEach((_,j) => { const tr=el('tr-'+j),ch=el('chk-'+j); if(tr)tr.classList.remove('sr'); if(ch)ch.checked=false; });
-  const tri=el('tr-'+i),chi=el('chk-'+i);
-  if(tri)tri.classList.add('sr'); if(chi)chi.checked=true;
-  selRow = i; el('btn-det').disabled = false;
-}
+
+function pickRow(i){ selectAndDetail(i); }
+function pickRowV(i){ selectAndDetail(i); }
 
 // ── DETAIL ─────────────────────────────────────────────────────
 function goDetail(){
