@@ -677,8 +677,9 @@ function doSetupSave(){
   ss(K.S, sh);
   ss(K.D, '1');
   sheetData = [];
-  alert("✔ Configurazione salvata! L'app è pronta.");
-  goTo('input');
+  alert("✔ Configurazione salvata! Ora accedi con la password.");
+  goTo('login');
+  setTimeout(() => el('l-psw').focus(), 80);
 }
 
 // ── ADMIN PANEL ────────────────────────────────────────────────
@@ -782,20 +783,34 @@ function doReset(){
 // ── LOGIN ──────────────────────────────────────────────────────
 el('l-psw').addEventListener('keydown', e => { if(e.key === 'Enter') doLogin(); });
 async function doLogin(){
-  const v = el('l-psw').value, err = el('l-err');
+  const v = el('l-psw').value.trim();
+  const err = el('l-err');
+
+  // 1. Controlla password
   if(v !== admP() && v !== pubP()){
-    err.classList.add('on'); el('l-psw').focus(); return;
+    err.textContent = 'Non autorizzato, contattare l\'amministratore';
+    err.classList.add('on');
+    el('l-psw').focus();
+    return;
   }
-  err.classList.remove('on'); el('l-psw').value = '';
+
+  // 2. Password corretta — controlla se il foglio è configurato
+  err.classList.remove('on');
+  el('l-psw').value = '';
+
+  if(!cfgOk() || !shtU()){
+    err.textContent = 'App non ancora configurata. Premere "Amministratore" per completare il setup.';
+    err.classList.add('on');
+    return;
+  }
+
+  // 3. Carica foglio se non già in memoria
   if(!sheetData.length){
-    // gvizUrl() costruisce l'URL a partire dall'ID del foglio in localStorage (inserito dall'admin)
-    const u = gvizUrl();
-    if(!u){
-      alert("Foglio dati non configurato. Contattare l'amministratore.");
-      return;
-    }
-    setLoad(true); await loadSheet(); setLoad(false);
+    setLoad(true);
+    await loadSheet();
+    setLoad(false);
   }
+
   goTo('input');
 }
 
@@ -1322,11 +1337,15 @@ async function doBiometric(){
 }
 
 async function bioLoginSuccess(){
-  // Accesso biometrico = utente normale (equivalente a password pubblica)
+  // Accesso biometrico = equivalente a password pubblica
+  if(!cfgOk() || !shtU()){
+    el('bio-status').textContent="❌ App non configurata. Premere 'Amministratore' per il setup.";
+    return;
+  }
   if(!sheetData.length){
-    const u=gvizUrl();
-    if(!u){ el('bio-status').textContent="❌ Foglio dati non configurato. Contattare l'amministratore."; return; }
-    setLoad(true); await loadSheet(); setLoad(false);
+    setLoad(true);
+    await loadSheet();
+    setLoad(false);
   }
   el('bio-status').textContent='';
   goTo('input');
