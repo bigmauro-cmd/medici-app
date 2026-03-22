@@ -163,8 +163,6 @@ tbody tr.sr{background:#dbeafe}
 tbody td{padding:11px 13px;color:var(--g500);vertical-align:middle;font-weight:700}
 tbody td:first-child{text-align:center;width:42px}
 input[type=checkbox]{width:17px;height:17px;accent-color:var(--blue);cursor:pointer}
-/* Colonna Spec. Principale: si allarga quanto serve, centrata, mai a capo */
-.col-sp1{width:20ch;min-width:20ch;max-width:20ch;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;text-align:center !important;font-size:.78rem !important;padding-left:8px !important;padding-right:8px !important;}
 
 /* DETAIL */
 .phdr{border-radius:var(--r);padding:26px 30px;margin-bottom:20px;background:linear-gradient(135deg,var(--navy) 0%,#1e3a5f 50%,var(--blue) 100%);color:#fff;position:relative;overflow:hidden}
@@ -176,7 +174,7 @@ input[type=checkbox]{width:17px;height:17px;accent-color:var(--blue);cursor:poin
 @media(max-width:380px){.phname{font-size:1.1rem}.phdr{padding:14px 12px}}
 .dtbl{width:100%;border-collapse:collapse}
 .dtbl tr{border-bottom:1px solid var(--g100)}.dtbl tr:last-child{border-bottom:none}
-.dtbl td{padding:10px 12px;vertical-align:top}
+.dtbl td{padding:12px 16px;vertical-align:top}
 .dtbl td:first-child{font-weight:700;color:var(--blue);font-size:.68rem;text-transform:uppercase;letter-spacing:.5px;background:var(--g50);border-right:1px solid var(--g100);width:40%;white-space:normal;word-break:break-word;line-height:1.35}
 .dtbl td:last-child{font-weight:700;font-size:.9rem;word-break:break-word}
 @media(max-width:480px){
@@ -192,6 +190,8 @@ input[type=checkbox]{width:17px;height:17px;accent-color:var(--blue);cursor:poin
 .vrow:last-child{border-bottom:none}
 .vlbl{background:var(--g50);color:var(--blue);font-size:.65rem;font-weight:700;text-transform:uppercase;letter-spacing:.4px;padding:8px 8px;min-width:100px;max-width:120px;word-break:break-word;border-right:1px solid var(--g100);line-height:1.3}
 .vval{padding:8px 10px;font-size:.88rem;font-weight:700;color:var(--g700);flex:1;word-break:break-word}
+/* Colonna Spec. Principale: 20ch, centrata, mai a capo */
+.col-sp1{white-space:nowrap;text-align:center !important;font-size:.78rem !important;padding-left:8px !important;padding-right:8px !important;}
 </style>
 </head>
 <body>
@@ -412,7 +412,6 @@ input[type=checkbox]{width:17px;height:17px;accent-color:var(--blue);cursor:poin
   <div class="card">
     <div class="ptitle">Ricerca Professionista</div>
     <div class="psub">Digita oppure scegli dal menù a tendina — uno o più campi</div>
-
     <div class="fg">
       <label>Specializzazione Principale <span style="color:var(--ac)">[SPEC1]</span></label>
       <div class="ddw">
@@ -515,18 +514,9 @@ input[type=checkbox]{width:17px;height:17px;accent-color:var(--blue);cursor:poin
 <!-- PAGE: RISULTATI -->
 <div class="page" id="page-results">
   <div class="card">
-    <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;margin-bottom:6px">
-      <div>
-        <div class="ptitle">Risultati della Ricerca</div>
-        <div class="psub" id="res-sub"></div>
-      </div>
-      <button class="btn bg" id="btn-vista" onclick="toggleVista()" style="font-size:.75rem;padding:7px 14px;white-space:nowrap;flex-shrink:0">
-        <svg id="icon-vista" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="18"/><rect x="14" y="3" width="7" height="8"/><rect x="14" y="15" width="7" height="6"/></svg>
-        <span id="lbl-vista">Vista Verticale</span>
-      </button>
-    </div>
+    <div class="ptitle">Risultati della Ricerca</div>
+    <div class="psub" id="res-sub"></div>
     <div id="res-body"></div>
-    <div id="res-body-vert"></div>
     <div class="divider"></div>
     <div class="brow">
       <button class="btn bb" id="btn-det" onclick="goDetail()" disabled>
@@ -798,32 +788,16 @@ el('l-psw').addEventListener('keydown', e => { if(e.key === 'Enter') doLogin(); 
 async function doLogin(){
   const v = el('l-psw').value.trim();
   const err = el('l-err');
-
-  // 1. Controlla password
   if(v !== admP() && v !== pubP()){
-    err.textContent = 'Non autorizzato, contattare l\'amministratore';
-    err.classList.add('on');
-    el('l-psw').focus();
-    return;
+    err.textContent = "Non autorizzato, contattare l'amministratore";
+    err.classList.add('on'); el('l-psw').focus(); return;
   }
-
-  // 2. Password corretta — controlla se il foglio è configurato
-  err.classList.remove('on');
-  el('l-psw').value = '';
-
+  err.classList.remove('on'); el('l-psw').value = '';
   if(!cfgOk() || !shtU()){
     err.textContent = 'App non ancora configurata. Premere "Amministratore" per completare il setup.';
-    err.classList.add('on');
-    return;
+    err.classList.add('on'); return;
   }
-
-  // 3. Carica foglio se non già in memoria
-  if(!sheetData.length){
-    setLoad(true);
-    await loadSheet();
-    setLoad(false);
-  }
-
+  if(!sheetData.length){ setLoad(true); await loadSheet(); setLoad(false); }
   goTo('input');
 }
 
@@ -1102,39 +1076,7 @@ function doSearch(){
   renderRes();
   goTo('results');
 }
-// ── VISTA: auto-detect desktop(standard) / mobile(verticale) ──
-function isMobile(){ return window.matchMedia('(max-width:768px),(orientation:portrait)').matches; }
-let vistaVert = true; // sempre verticale di default; su desktop largo si passa a standard
-
-function applyVista(){
-  const rb  = document.getElementById('res-body');
-  const rbv = document.getElementById('res-body-vert');
-  const btn = document.getElementById('btn-vista');
-  if(rb)  rb.style.display  = vistaVert ? 'none' : '';
-  if(rbv) rbv.style.display = vistaVert ? '' : 'none';
-  if(!btn) return;
-  const icon = document.getElementById('icon-vista');
-  const lbl  = document.getElementById('lbl-vista');
-  if(vistaVert){
-    if(icon) icon.innerHTML='<rect x="3" y="3" width="18" height="5"/><rect x="3" y="12" width="18" height="4"/><rect x="3" y="20" width="18" height="1"/>';
-    if(lbl)  lbl.textContent='Vista Standard';
-  } else {
-    if(icon) icon.innerHTML='<rect x="3" y="3" width="7" height="18"/><rect x="14" y="3" width="7" height="8"/><rect x="14" y="15" width="7" height="6"/>';
-    if(lbl)  lbl.textContent='Vista Verticale';
-  }
-}
-
-// Imposta vista in base al dispositivo: desktop largo → standard, tutto il resto → verticale
-function autoVista(){
-  vistaVert = !window.matchMedia('(min-width:1024px)').matches;
-  applyVista();
-}
-
-function toggleVista(){
-  vistaVert = !vistaVert;
-  autoVista();
-}
-
+// ── RISULTATI con grafica dtbl (identica al dettaglio) ─────────
 function renderRes(){
   el('res-sub').textContent = results.length + ' risultat' + (results.length === 1 ? 'o trovato' : 'i trovati');
   el('btn-det').disabled = true;
@@ -1142,57 +1084,52 @@ function renderRes(){
 
   if(!results.length){
     el('res-body').innerHTML = '<div class="nores"><p>Nessun risultato trovato</p></div>';
-    el('res-body-vert').innerHTML = '<div class="nores"><p>Nessun risultato trovato</p></div>';
-    autoVista();
     return;
   }
 
-  // Tabella standard (desktop) - no Ubicazione, sp1 centrata, click=goDetail
-  let h = '<div class="tw"><table><thead><tr>'
-        + '<th class="col-sp1">Spec. Principale</th>'
-        + '<th>Reparto</th><th>Specializzazione</th><th>Citta</th><th>Struttura</th><th>Professionista</th>'
-        + '</tr></thead><tbody>';
-  results.forEach((r,i) => {
-    h += '<tr id="tr-'+i+'" onclick="selectAndDetail('+i+')">'
-       + '<td class="col-sp1">'+esc(r.A)+'</td>'
-       + '<td>'+esc(r.B)+'</td><td>'+esc(r.C)+'</td><td>'+esc(r.D)+'</td><td>'+esc(r.E)+'</td>'
-       + '<td><b>'+esc(r.G)+'</b></td></tr>';
-  });
-  h += '</tbody></table></div>';
-  el('res-body').innerHTML = h;
+  // Colonne da mostrare nei risultati (no Ubicazione)
+  const cols = [
+    ['A','Spec. Principale'],
+    ['B','Reparto'],
+    ['C','Specializzazione'],
+    ['D','Città'],
+    ['E','Struttura'],
+    ['G','Professionista']
+  ];
 
-  // Vista verticale (mobile) - no Ubicazione, tap=goDetail
-  const cols = [['A','Spec. Principale'],['B','Reparto'],['C','Specializzazione'],['D','Citta'],['E','Struttura'],['G','Professionista']];
-  let hv = '';
+  // Ogni risultato = una dtbl identica a quella del dettaglio, cliccabile
+  let h = '';
   results.forEach((r,i) => {
-    hv += '<div class="vcard" id="vc-'+i+'" onclick="selectAndDetail('+i+')">';
+    h += '<div id="rc-'+i+'" onclick="selectAndDetail('+i+')" style="cursor:pointer;margin-bottom:14px;border-radius:var(--r);overflow:hidden;border:2px solid '+(i===selRow?'var(--blue)':'var(--g200)')+';">'
+       + '<div class="tw"><table class="dtbl"><tbody>';
     cols.forEach(([k,lbl]) => {
-      hv += '<div class="vrow"><div class="vlbl">'+lbl+'</div><div class="vval">'+(esc(r[k])||'&mdash;')+'</div></div>';
+      h += '<tr><td>'+lbl+'</td><td>'+(esc(r[k])||'<span style="color:var(--g300)">—</span>')+'</td></tr>';
     });
-    hv += '</div>';
+    h += '</tbody></table></div></div>';
   });
-  el('res-body-vert').innerHTML = hv;
-  autoVista();
+  el('res-body').innerHTML = h;
 }
 
-// Click/tap su riga = seleziona e apre subito il dettaglio
 function selectAndDetail(i){
-  results.forEach((_,j)=>{ const tr=el('tr-'+j); if(tr) tr.classList.remove('sr'); });
-  const tri=el('tr-'+i); if(tri) tri.classList.add('sr');
-  results.forEach((_,j)=>{ const vc=el('vc-'+j); if(vc) vc.classList.remove('sr'); });
-  const vci=el('vc-'+i); if(vci) vci.classList.add('sr');
-  selRow = i;
-  el('btn-det').disabled = false;
+  // Aggiorna bordo selezione su tutti i blocchi
+  results.forEach((_,j)=>{
+    const rc=el('rc-'+j);
+    if(rc) rc.style.border='2px solid var(--g200)';
+  });
+  const rc=el('rc-'+i);
+  if(rc) rc.style.border='2px solid var(--blue)';
+  selRow=i;
+  el('btn-det').disabled=false;
   goDetail();
 }
-
 function pickRow(i){ selectAndDetail(i); }
-function pickRowV(i){ selectAndDetail(i); }
 
 // ── DETAIL ─────────────────────────────────────────────────────
 function goDetail(){
   if(selRow === null) return;
   const r = results[selRow];
+  el('d-lbl').textContent  = (lastS1 || 'Specializzazione').toUpperCase();
+  el('d-name').textContent = r.G || '—';
   el('d-spec').textContent = r.C || '';
   el('d-tbody').innerHTML  = [
     ['A','Specializzazione Principale'],
@@ -1269,28 +1206,19 @@ async function testSheet(inputId, resId, openId){
   }
 }
 
+
 // ── BIOMETRIA ──────────────────────────────────────────────────
-// Logica:
-// - Primo accesso su dispositivo nuovo → obbliga impostazione PIN/impronta
-// - Accessi successivi → verifica PIN/impronta e fa entrare come utente normale
-// - Le password che contano sono quelle in localStorage (admin/public di default)
-// - Il tasto Amministratore usa SOLO la password admin (mai biometria)
-
 const BIO_KEY = 'csp_bio';
-
 async function bioSupported(){
   try{ return !!(window.PublicKeyCredential && await PublicKeyCredential.isUserVerifyingPlatformAuthenticatorAvailable()); }
   catch(e){ return false; }
 }
-
 async function sha256(str){
   const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(str));
   return [...new Uint8Array(buf)].map(b=>b.toString(16).padStart(2,'0')).join('');
 }
 function b64enc(buf){ return btoa(String.fromCharCode(...new Uint8Array(buf))); }
 function b64dec(b64){ const bin=atob(b64);const b=new Uint8Array(bin.length);bin.split('').forEach((c,i)=>b[i]=c.charCodeAt(0));return b.buffer; }
-
-// Modale PIN con conferma doppia (solo per impostazione)
 function showPIN(title, subtitle, cb){
   const old=document.getElementById('pin-overlay'); if(old) old.remove();
   const o=document.createElement('div');
@@ -1317,36 +1245,26 @@ function showPIN(title, subtitle, cb){
     o.remove(); cb(v);
   };
 }
-
-// Impostazione PIN con doppia conferma
 function setupPIN(onDone){
   showPIN('🔢 Imposta PIN di accesso rapido','Scegli un PIN numerico di almeno 4 cifre', pin1=>{
     showPIN('🔢 Conferma PIN','Reinserisci il PIN per confermare', async pin2=>{
-      if(pin1 !== pin2){
-        el('bio-status').textContent='❌ I PIN non corrispondono. Riprova.';
-        return;
-      }
+      if(pin1 !== pin2){ el('bio-status').textContent='❌ I PIN non corrispondono. Riprova.'; return; }
       const h=await sha256(pin1+'csp2024_salt');
       localStorage.setItem(BIO_KEY+'_p',h);
-      el('bio-status').textContent='✅ PIN impostato con successo!';
-      el('bio-icon').textContent='🔢';
-      el('bio-label').textContent='Accedi con PIN';
+      el('bio-status').textContent='✅ PIN impostato! Ripremi per accedere.';
+      el('bio-icon').textContent='🔢'; el('bio-label').textContent='Accedi con PIN';
       if(onDone) onDone();
     });
   });
 }
-
 async function doBiometric(){
   const st=el('bio-status');
   const webOk=await bioSupported();
   const isHttps=location.protocol==='https:'||location.hostname==='localhost';
-
   if(webOk && isHttps){
-    // ── WebAuthn nativo (impronta / Face ID) — su HTTPS
     const stored=localStorage.getItem(BIO_KEY+'_w');
     if(!stored){
-      // Primo accesso: registra impronta
-      st.textContent='⏳ Registrazione impronta/Face ID in corso…';
+      st.textContent='⏳ Registrazione biometria…';
       try{
         const c=await navigator.credentials.create({publicKey:{
           challenge:crypto.getRandomValues(new Uint8Array(32)),
@@ -1357,15 +1275,12 @@ async function doBiometric(){
           timeout:60000
         }});
         localStorage.setItem(BIO_KEY+'_w',JSON.stringify({id:b64enc(c.rawId)}));
-        st.textContent='✅ Biometria registrata! Ripremi il pulsante per accedere.';
+        st.textContent='✅ Biometria registrata! Ripremi per accedere.';
         el('bio-label').textContent='Accedi con Biometria';
         el('bio-icon').textContent=/iphone|ipad|mac/i.test(navigator.userAgent)?'🍎':'👆';
-      }catch(e){
-        st.textContent='❌ Registrazione annullata: '+e.message;
-      }
+      }catch(e){ st.textContent='❌ '+e.message; }
       return;
     }
-    // Accessi successivi: verifica impronta
     st.textContent='⏳ Verifica in corso…';
     try{
       const s=JSON.parse(stored);
@@ -1375,46 +1290,22 @@ async function doBiometric(){
         userVerification:'required',timeout:60000
       }});
       if(a){ st.textContent=''; await bioLoginSuccess(); }
-    }catch(e){ st.textContent='❌ Verifica fallita: '+e.message; }
-
+    }catch(e){ st.textContent='❌ '+e.message; }
   } else {
-    // ── PIN numerico — fallback per file locale o HTTP
     const stored=localStorage.getItem(BIO_KEY+'_p');
-    if(!stored){
-      // Primo accesso su questo dispositivo: imposta PIN
-      st.textContent='';
-      setupPIN(null); // non fa login automatico dopo setup: utente ripremi il tasto
-      return;
-    }
-    // PIN già impostato: verifica
+    if(!stored){ st.textContent=''; setupPIN(null); return; }
     showPIN('🔢 Inserisci il tuo PIN','PIN di accesso rapido', async pin=>{
       const h=await sha256(pin+'csp2024_salt');
-      if(h===stored){
-        st.textContent='';
-        await bioLoginSuccess();
-      } else {
-        st.textContent='❌ PIN errato. Riprova.';
-      }
+      if(h===stored){ st.textContent=''; await bioLoginSuccess(); }
+      else { st.textContent='❌ PIN errato. Riprova.'; }
     });
   }
 }
-
 async function bioLoginSuccess(){
-  // Accesso biometrico = equivalente a password pubblica
-  if(!cfgOk() || !shtU()){
-    el('bio-status').textContent="❌ App non configurata. Premere 'Amministratore' per il setup.";
-    return;
-  }
-  if(!sheetData.length){
-    setLoad(true);
-    await loadSheet();
-    setLoad(false);
-  }
-  el('bio-status').textContent='';
-  goTo('input');
+  if(!cfgOk()||!shtU()){ el('bio-status').textContent="❌ App non configurata. Premere 'Amministratore'."; return; }
+  if(!sheetData.length){ setLoad(true); await loadSheet(); setLoad(false); }
+  el('bio-status').textContent=''; goTo('input');
 }
-
-// Inizializzazione all'avvio: aggiorna icona e testo del pulsante
 (async()=>{
   const webOk=await bioSupported().catch(()=>false);
   const isHttps=location.protocol==='https:'||location.hostname==='localhost';
