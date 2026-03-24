@@ -400,7 +400,14 @@ input[type=checkbox]{width:17px;height:17px;accent-color:var(--blue);cursor:poin
           style="width:100%;background:linear-gradient(135deg,#4f46e5,#7c3aed);color:#fff;justify-content:center;gap:10px">
           <span id="bio-icon">👆</span>
           <span id="bio-label">Accedi con Biometria / PIN</span>
+          <span id="bio-warn" style="display:none;font-size:1rem;margin-left:4px" title="Password cambiata — reinserisci la password per aggiornare">⚠️</span>
         </button>
+        <div id="bio-msg-warn" style="display:none;background:#fffbeb;border:1px solid #fcd34d;color:#92400e;font-size:.78rem;padding:8px 12px;border-radius:8px;margin-top:7px;text-align:center">
+          ⚠️ La password pubblica è stata modificata dall'amministratore.<br>Accedi una volta con la password per riattivare la biometria.
+        </div>
+        <div id="bio-msg-first" style="display:none;background:#eff6ff;border:1px solid #bfdbfe;color:#1e40af;font-size:.78rem;padding:8px 12px;border-radius:8px;margin-top:7px;text-align:center">
+          👆 Primo accesso: inserisci la password qui sopra per abilitare la biometria su questo dispositivo.
+        </div>
         <div id="bio-status" style="font-size:.78rem;color:var(--g400);margin-top:7px;text-align:center;min-height:18px"></div>
       </div>
     </div>
@@ -559,9 +566,6 @@ input[type=checkbox]{width:17px;height:17px;accent-color:var(--blue);cursor:poin
 'use strict';
 
 // ── CHIAVI LOCALSTORAGE ────────────────────────────────────────
-// Nessun URL predefinito nello script.
-// Tutti i dati di configurazione provengono ESCLUSIVAMENTE
-// dagli input inseriti dall'amministratore tramite il pannello.
 const K = { A:'_adm', P:'_pub', S:'_sht', D:'_done' };
 
 // Password provvisorie solo per il primo login amministratore
@@ -572,8 +576,21 @@ const sg    = k => localStorage.getItem(k);
 const ss    = (k,v) => localStorage.setItem(k,v);
 const admP  = () => sg(K.A) || DA;
 const pubP  = () => sg(K.P) || DP;
-const shtU  = () => sg(K.S) || '';   // URL foglio: solo da localStorage
+const shtU  = () => sg(K.S) || '';
 const cfgOk = () => sg(K.D) === '1';
+
+// Chiave versione password pubblica: incrementata ogni volta che l'admin la cambia.
+// Ogni dispositivo con bio salva la versione al momento dell'impostazione.
+// Se le versioni non coincidono → password cambiata → serve riautenticarsi con password.
+const K_PUBVER  = '_pubver';   // versione corrente (globale, impostata dall'admin)
+const K_BIOVER  = '_biover';   // versione al momento dell'impostazione bio (per dispositivo)
+const K_FIRSTOK = '_firstok';  // flag: questo dispositivo ha già fatto il primo accesso con password
+
+const pubVer    = ()  => sg(K_PUBVER) || '0';
+const bioVer    = ()  => sg(K_BIOVER) || '-1';
+const bioOk     = ()  => bioVer() === pubVer();   // true = bio è aggiornata
+const firstOk   = ()  => sg(K_FIRSTOK) === '1';   // true = primo accesso password già fatto
+
 const el    = id => document.getElementById(id);
 let sheetData = [];
 
@@ -677,6 +694,7 @@ function doSetupSave(){
   // Salva in localStorage solo i valori inseriti dall'admin
   ss(K.A, a1);
   ss(K.P, p1);
+  ss(K_PUBVER, '1'); // versione iniziale password pubblica
   ss(K.S, sh);
   ss(K.D, '1');
   sheetData = [];
@@ -714,7 +732,7 @@ function doAdmSave(){
   if(!ok) return;
   // Aggiorna localStorage solo con i nuovi valori inseriti dall'admin
   if(a1) ss(K.A, a1);
-  if(p1) ss(K.P, p1);
+  if(p1) { ss(K.P, p1); ss(K_PUBVER, String(Date.now())); } // nuova versione → bio esistenti invalidate
   if(sh) ss(K.S, sh);
   sheetData = [];
   el('a-ok').classList.add('on');
@@ -797,6 +815,11 @@ async function doLogin(){
     err.textContent = 'App non ancora configurata. Premere "Amministratore" per completare il setup.';
     err.classList.add('on'); return;
   }
+  // Primo accesso con password su questo dispositivo: abilita la biometria
+  ss(K_FIRSTOK, '1');
+  // Sincronizza la versione della bio con quella corrente della password pubblica
+  ss(K_BIOVER, pubVer());
+  updateBioUI();
   if(!sheetData.length){ setLoad(true); await loadSheet(); setLoad(false); }
   goTo('input');
 }
@@ -1208,7 +1231,15 @@ async function testSheet(inputId, resId, openId){
 
 
 // ── BIOMETRIA ──────────────────────────────────────────────────
+// LOGICA DI SICUREZZA:
+// 1. Primo accesso da nuovo dispositivo → OBBLIGATORIO inserire password
+// 2. Accessi successivi → biometria/PIN (se versione password ok)
+// 3. Admin cambia password pubblica → triangolino ⚠️, bio bloccata finché
+//    l'utente non reinserisce la password (che aggiorna la versione locale)
+// 4. Pannello admin → SEMPRE e SOLO password, mai biometria
+
 const BIO_KEY = 'csp_bio';
+
 async function bioSupported(){
   try{ return !!(window.PublicKeyCredential && await PublicKeyCredential.isUserVerifyingPlatformAuthenticatorAvailable()); }
   catch(e){ return false; }
@@ -1219,6 +1250,45 @@ async function sha256(str){
 }
 function b64enc(buf){ return btoa(String.fromCharCode(...new Uint8Array(buf))); }
 function b64dec(b64){ const bin=atob(b64);const b=new Uint8Array(bin.length);bin.split('').forEach((c,i)=>b[i]=c.charCodeAt(0));return b.buffer; }
+
+// Aggiorna UI pulsante biometria in base allo stato del dispositivo
+function updateBioUI(){
+  const warn     = el('bio-warn');
+  const msgWarn  = el('bio-msg-warn');
+  const msgFirst = el('bio-msg-first');
+  const btnBio   = el('btn-bio');
+  const hasW     = !!localStorage.getItem(BIO_KEY+'_w');
+  const hasP     = !!localStorage.getItem(BIO_KEY+'_p');
+  const hasBio   = hasW || hasP;
+
+  if(!firstOk()){
+    // Nuovo dispositivo: non ha ancora fatto il primo accesso con password
+    if(warn)     warn.style.display     = 'none';
+    if(msgWarn)  msgWarn.style.display  = 'none';
+    if(msgFirst) msgFirst.style.display = '';
+    if(btnBio)   btnBio.style.opacity   = '0.45';
+    if(btnBio)   btnBio.style.pointerEvents = 'none';
+    return;
+  }
+
+  if(hasBio && !bioOk()){
+    // Password pubblica cambiata dall'admin dopo l'impostazione della bio
+    if(warn)     warn.style.display     = '';
+    if(msgWarn)  msgWarn.style.display  = '';
+    if(msgFirst) msgFirst.style.display = 'none';
+    if(btnBio)   btnBio.style.opacity   = '0.5';
+    if(btnBio)   btnBio.style.pointerEvents = 'none';
+    return;
+  }
+
+  // Stato normale
+  if(warn)     warn.style.display     = 'none';
+  if(msgWarn)  msgWarn.style.display  = 'none';
+  if(msgFirst) msgFirst.style.display = 'none';
+  if(btnBio)   btnBio.style.opacity   = '';
+  if(btnBio)   btnBio.style.pointerEvents = '';
+}
+
 function showPIN(title, subtitle, cb){
   const old=document.getElementById('pin-overlay'); if(old) old.remove();
   const o=document.createElement('div');
@@ -1245,25 +1315,35 @@ function showPIN(title, subtitle, cb){
     o.remove(); cb(v);
   };
 }
+
 function setupPIN(onDone){
   showPIN('🔢 Imposta PIN di accesso rapido','Scegli un PIN numerico di almeno 4 cifre', pin1=>{
     showPIN('🔢 Conferma PIN','Reinserisci il PIN per confermare', async pin2=>{
       if(pin1 !== pin2){ el('bio-status').textContent='❌ I PIN non corrispondono. Riprova.'; return; }
       const h=await sha256(pin1+'csp2024_salt');
-      localStorage.setItem(BIO_KEY+'_p',h);
+      localStorage.setItem(BIO_KEY+'_p', h);
+      // Salva la versione corrente della password pubblica
+      ss(K_BIOVER, pubVer());
       el('bio-status').textContent='✅ PIN impostato! Ripremi per accedere.';
       el('bio-icon').textContent='🔢'; el('bio-label').textContent='Accedi con PIN';
+      updateBioUI();
       if(onDone) onDone();
     });
   });
 }
+
 async function doBiometric(){
+  // Sicurezza: blocca se non ha fatto primo accesso o bio non aggiornata
+  if(!firstOk() || !bioOk()) return;
+
   const st=el('bio-status');
   const webOk=await bioSupported();
   const isHttps=location.protocol==='https:'||location.hostname==='localhost';
+
   if(webOk && isHttps){
     const stored=localStorage.getItem(BIO_KEY+'_w');
     if(!stored){
+      // Prima volta su questo dispositivo con WebAuthn
       st.textContent='⏳ Registrazione biometria…';
       try{
         const c=await navigator.credentials.create({publicKey:{
@@ -1274,10 +1354,12 @@ async function doBiometric(){
           authenticatorSelection:{authenticatorAttachment:'platform',userVerification:'required'},
           timeout:60000
         }});
-        localStorage.setItem(BIO_KEY+'_w',JSON.stringify({id:b64enc(c.rawId)}));
+        localStorage.setItem(BIO_KEY+'_w', JSON.stringify({id:b64enc(c.rawId)}));
+        ss(K_BIOVER, pubVer());
         st.textContent='✅ Biometria registrata! Ripremi per accedere.';
         el('bio-label').textContent='Accedi con Biometria';
         el('bio-icon').textContent=/iphone|ipad|mac/i.test(navigator.userAgent)?'🍎':'👆';
+        updateBioUI();
       }catch(e){ st.textContent='❌ '+e.message; }
       return;
     }
@@ -1291,9 +1373,15 @@ async function doBiometric(){
       }});
       if(a){ st.textContent=''; await bioLoginSuccess(); }
     }catch(e){ st.textContent='❌ '+e.message; }
+
   } else {
+    // PIN numerico (file locale / HTTP)
     const stored=localStorage.getItem(BIO_KEY+'_p');
-    if(!stored){ st.textContent=''; setupPIN(null); return; }
+    if(!stored){
+      st.textContent='';
+      setupPIN(null);
+      return;
+    }
     showPIN('🔢 Inserisci il tuo PIN','PIN di accesso rapido', async pin=>{
       const h=await sha256(pin+'csp2024_salt');
       if(h===stored){ st.textContent=''; await bioLoginSuccess(); }
@@ -1301,23 +1389,33 @@ async function doBiometric(){
     });
   }
 }
+
 async function bioLoginSuccess(){
   if(!cfgOk()||!shtU()){ el('bio-status').textContent="❌ App non configurata. Premere 'Amministratore'."; return; }
   if(!sheetData.length){ setLoad(true); await loadSheet(); setLoad(false); }
-  el('bio-status').textContent=''; goTo('input');
+  el('bio-status').textContent='';
+  goTo('input');
 }
+
+// ── Inizializzazione all'avvio ─────────────────────────────────
 (async()=>{
-  const webOk=await bioSupported().catch(()=>false);
-  const isHttps=location.protocol==='https:'||location.hostname==='localhost';
-  const hasW=!!localStorage.getItem(BIO_KEY+'_w');
-  const hasP=!!localStorage.getItem(BIO_KEY+'_p');
+  const webOk   = await bioSupported().catch(()=>false);
+  const isHttps = location.protocol==='https:'||location.hostname==='localhost';
+  const hasW    = !!localStorage.getItem(BIO_KEY+'_w');
+  const hasP    = !!localStorage.getItem(BIO_KEY+'_p');
+  const hasBio  = hasW || hasP;
+
+  // Testo e icona pulsante
   if(webOk && isHttps){
-    el('bio-icon').textContent=/iphone|ipad|mac/i.test(navigator.userAgent)?'🍎':'👆';
-    el('bio-label').textContent=hasW?'Accedi con Biometria':'Imposta Biometria (1° accesso)';
+    el('bio-icon').textContent = /iphone|ipad|mac/i.test(navigator.userAgent)?'🍎':'👆';
+    el('bio-label').textContent = hasBio ? 'Accedi con Biometria' : 'Registra Biometria';
   } else {
-    el('bio-icon').textContent='🔢';
-    el('bio-label').textContent=hasP?'Accedi con PIN':'Imposta PIN (1° accesso)';
+    el('bio-icon').textContent  = '🔢';
+    el('bio-label').textContent = hasBio ? 'Accedi con PIN' : 'Imposta PIN (1° accesso)';
   }
+
+  // Applica stato UI (blocchi, avvisi, triangolino)
+  updateBioUI();
 })();
 </script>
 </body>
